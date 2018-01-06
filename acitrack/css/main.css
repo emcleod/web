@@ -1,13 +1,19 @@
+body {
+    padding-top: 300px;
+    padding-bottom: 100px;
+}
+
 /* header */
 .header {
     position: fixed;
+    width: 100%;
     top: 0;
-    width: 100%
+    background-color: white;
 }
 
 .header img {
     display: block;
-    margin: auto;
+    margin: 0 auto;
     width: 50%;
     opacity: 0.5;
     filter: alpha(opacity=50);
@@ -27,42 +33,48 @@
 /* navigation bar */
 .navigation-bar {
     position: fixed;
-    width: 100%;
-    top: 260px;
 }
 
 /* menu that appears on all pages */
-ul {
+.navigation-bar ul {
     list-style-type: none;
-    margin: 0;
+    margin-top: 250px;
     padding: 0;
     overflow: hidden;    
     background-color: darkgray;
 }
 
-li {
+.navigation-bar li {
     float: left;
 }
 
-li a, .menu-drophead {
+.navigation-bar li a, .menu-drophead {
     display: inline-block;
     color: white;
     text-align: center;
-    padding: 14px 16px;
+    padding: 14px 60px;
     text-decoration: none;
     font-weight: bold;
 }
 
-li a:hover, .menu-dropdown:hover .menu-drophead {
+.navigation-bar li a:hover, .menu-dropdown:hover .menu-drophead {
     background-color: black;
 }
 
-li a:hover:not(.active), .menu-dropdown:hover:not(.active) .menu-drophead {
+.navigation-bar li a:hover:not(.active), .menu-dropdown:hover:not(.active) .menu-drophead {
     background-color: black;
 }
 
-li.menu-dropdown {
+.navigation-bar li.menu-dropdown {
     display: inline-block;
+}
+
+.navigation-bar {
+    position: fixed;
+    width: 100%;
+    height: 300px;
+    top: 0;
+    z-index: 2;
 }
 
 .menu-dropdown-content {
@@ -96,8 +108,6 @@ li.menu-dropdown {
 }
 
 /** the main body of the text */
-.main-text {
-    position: absolute;
-    top: 400px;
-    overflow: overflow:hidden;
+.main-section {
+    width: 100%;
 }
