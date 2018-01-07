@@ -1,6 +1,6 @@
 body {
-    padding-top: 300px;
-    padding-bottom: 100px;
+    padding-top: 17%;
+    padding-bottom: 10%;
 }
 
 /* header */
@@ -35,10 +35,9 @@ body {
     position: fixed;
 }
 
-/* menu that appears on all pages */
 .navigation-bar ul {
     list-style-type: none;
-    margin-top: 250px;
+    margin-top: 13%;
     padding: 0;
     overflow: hidden;    
     background-color: darkgray;
@@ -66,7 +65,7 @@ body {
 }
 
 .navigation-bar li.menu-dropdown {
-    display: inline-block;
+    display: block;
 }
 
 .navigation-bar {
@@ -96,7 +95,7 @@ body {
 }
 
 .menu-dropdown-content menu-a:hover {
-    background-color: #f1f1f1;
+    background-color: darkgray;
 }
 
 .menu-dropdown:hover .menu-dropdown-content {
