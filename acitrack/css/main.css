@@ -1,3 +1,8 @@
+header, nav, body {
+    max-width: 1800px;
+    margin: auto;
+}
+
 body {
     padding-top: 17%;
     padding-bottom: 5%;
@@ -42,7 +47,7 @@ nav {
 nav ul {
     list-style-type: none;
     margin-top: 13%;
-    padding: 0;
+    padding: 0% 15%;
     overflow: hidden;    
     background-color: darkgray;
 }
@@ -85,7 +90,46 @@ nav li a:hover:not(.navigation-bar-active), .menu:hover:not(.navigation-bar-acti
     background-color: darkgreen;
 }
 
-/** the main body of the text */
-.main-section {
-    width: 100%;
+/** article - currently no side column, might need to add one */
+article {
+    margin: 0% 15%;
+}
+
+/** product summaries */
+.product-intro div {
+    height: 250px;
+}
+
+.product-intro img {
+    float: left;
+    width: 200px;
+    height: 200px;
+    margin-right: 5%;
+}
+
+.product-intro a {
+    text-decoration: none;
+    color: black;
+}
+
+a.details-button, a.details-button:link, a.details-button:visited {
+    background-color: red;
+    color: white;
+    padding: 14px 25px;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+a.details-button:hover, a.details-button:active {
+    background-color: darkred;
+}
+
+/** schools */
+div.schools {
+    margin-bottom: 150px;
+}
+
+.schools svg {
+    float: left;
 }
