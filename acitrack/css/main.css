@@ -1,6 +1,6 @@
 body {
     padding-top: 17%;
-    padding-bottom: 10%;
+    padding-bottom: 5%;
 }
 
 /* header */
@@ -31,7 +31,7 @@ header img {
 }
 
 /* navigation bar */
-.navigation-bar {
+nav {
     position: fixed;
     width: 100%;
     height: 300px;
@@ -39,7 +39,7 @@ header img {
     z-index: 2;
 }
 
-.navigation-bar ul {
+nav ul {
     list-style-type: none;
     margin-top: 13%;
     padding: 0;
@@ -47,11 +47,11 @@ header img {
     background-color: darkgray;
 }
 
-.navigation-bar li {
+nav li {
     float: left;
 }
 
-.navigation-bar li a, .menu-head {
+nav li a, .menu-head {
     display: block;
     color: white;
     text-align: left;
@@ -60,11 +60,11 @@ header img {
     font-weight: bold;
 }
 
-.navigation-bar li a:hover, .menu:hover .menu-head {
+nav li a:hover, .menu:hover .menu-head {
     background-color: black;
 }
 
-.navigation-bar li a:hover:not(.navigation-bar-active), .menu:hover:not(.navigation-bar-active) .menu-head {
+nav li a:hover:not(.navigation-bar-active), .menu:hover:not(.navigation-bar-active) .menu-head {
     background-color: black;
 }
 
@@ -81,7 +81,7 @@ header img {
     display: block;
 }
 
-.navigation-bar-active {
+.nav-active {
     background-color: darkgreen;
 }
 
