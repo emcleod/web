@@ -31,5 +31,28 @@
       </ul>
     </nav>
 
+    <article>
+      If you would like a demo or further information, please fill in the form below and we will contact you.
+
+      <form action="php/contact.php" method="post">
+        Name:<br/>
+        <input type="text" name="name"/><br/>
+        Email address:<br/>
+        <input type="email" name="email_address"/><br/>
+        Phone number:<br/>
+        <input type="text" name="phone_number"/><br/>
+        Institution type:<br/>
+        <select name="institution_type">
+          <option value="academy_chain">Academy Chain</option>
+          <option value="primary">Primary</option>
+          <option value="pru">PRU</option>
+          <option value="secondary">Secondary</option>
+        </select><br/>
+        Comments:<br/>
+        <textarea name="message" rows="10" cols="120">
+        </textarea><br/>
+        <input type="submit" value="Submit"/>
+      </form>
+    </article>
   </body>
 </html>
