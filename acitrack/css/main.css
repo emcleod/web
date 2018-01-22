@@ -133,3 +133,12 @@ div.schools {
 .schools svg {
     float: left;
 }
+
+a.default {
+    text-decoration: underline;
+    color: blue;
+}
+
+.error {
+    color: red;
+}
