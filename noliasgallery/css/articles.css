@@ -1,0 +1,32 @@
+body {
+    padding-top: 10rem;
+    padding-bottom: 3rem;
+    color: rgb(var(--bs-tertiary-color-rgb));
+}
+
+.section-mt-6 {
+    margin-top: 6rem !important;
+}
+
+.section-mt-10 {
+    margin-top: 10rem !important;
+}
+
+.hr-mt {
+    margin-top: 5rem !important;
+}
+
+.hr-mb {
+    margin-bottom: 5rem !important;
+}
+
+.image-div::after {
+    box-shadow: inset 0px 0px 15px 30px white;
+}
+
+.image-rounded-fade {
+    border: 5px solid white;
+    border-radius: 15px;
+    position: relative;
+    z-index: -2;
+}

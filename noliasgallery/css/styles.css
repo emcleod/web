@@ -12,5 +12,20 @@
 }
 
 .nav-borders {
-    margin-bottom: 100px;
+    margin-bottom: 1rem;
 }
+
+.py-10 {
+    padding-top: 5rem !important;
+    padding-bottom: 5rem !important;
+  }
+  
+.my-10 {
+    margin-top: 5rem !important;
+    margin-bottom: 5rem !important;
+}
+  
+.small-h1 {
+    font-size: calc(0.95rem + 0.75vw);
+}
+

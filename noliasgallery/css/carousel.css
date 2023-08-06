@@ -14,11 +14,11 @@ body {
 
 /* Carousel base class */
 .carousel {
-  margin-bottom: 4rem;
+  margin-bottom: 1rem;
 }
 /* Since positioning the image, we need to help out the caption */
 .carousel-caption {
-  bottom: 3rem;
+  bottom: 1rem;
   z-index: 10;
 }
 
@@ -37,27 +37,24 @@ body {
 
 /* Declare heights because of positioning of img element */
 .carousel-item {
-  height: 32rem;
+  height: 42rem;
+}
+
+.carousel-img {
+  object-fit: scale-down;
+/*  width: auto;
+  height: 100%;
+  /* height: 32rem; */
 }
 
 .carousel-space {
-  margin-top: 100px;
+  margin-top: 3rem;
 }
 
 .caption-right {
   text-align: right;
 }
 
-.mx-50 {
-  margin-right: 30rem !important;
-  margin-left: 20rem !important;
-}
-
-.carousel-img {
-  min-width: 40%;
-  max-width: 40%;
-  box-shadow: inset 0 0 80px 80px white;
-}
 /* MARKETING CONTENT
 -------------------------------------------------- */
 
@@ -102,76 +99,30 @@ body {
   .featurette-heading {
     font-size: 50px;
   }
+
 }
 
 @media (min-width: 62em) {
   .featurette-heading {
     margin-top: 7rem;
   }
-}
 
-/*
-@mixin faded($offset, $blur-radius, $spread-radius)
-{
-    &.faded-left:after {
-        box-shadow: inset $offset 0 $blur-radius (-$spread-radius);
-    }
+  .mx-50 {
+    margin-left: 20rem;
+    margin-right: 20rem;
+  }
 
-    &.faded-right:after {
-        box-shadow: inset (-$offset) 0 $blur-radius (-$spread-radius);
-    }
-
-    &.faded-top:after {
-       box-shadow: inset 0 $offset $blur-radius (-$spread-radius);
-    }
-
-    &.faded-bottom:after {
-        box-shadow: inset 0 (-$offset) $blur-radius (-$spread-radius);
-    }
-
-    &.faded-left.faded-right:after {
-        box-shadow: inset $offset 0 $blur-radius (-$spread-radius), inset (-$offset) 0 $blur-radius (-$spread-radius);
-    }
-
-    &.faded-left.faded-top:after {
-        box-shadow: inset $offset ($offset) $blur-radius (-$spread-radius);
-    }
-
-    &.faded-right.faded-bottom:after {
-        box-shadow: inset (-$offset) (-$offset) $blur-radius (-$spread-radius);
-    }
-
-    &.faded-top.faded-right:after {
-        box-shadow: inset (-$offset) $offset $blur-radius (-$spread-radius);
-    }
-
-    &.faded-top.faded-bottom:after {
-       box-shadow: inset 0 $offset $blur-radius (-$spread-radius), inset 0 (-$offset) $blur-radius (-$spread-radius);
-    }
-
-    &.faded-left.faded-bottom:after {
-        box-shadow: inset $offset (-$offset) $blur-radius (-$spread-radius);
-    }
-
-    &.faded-top.faded-right.faded-bottom:after {
-        box-shadow: inset (-$offset/2) 0 $blur-radius $spread-radius;
-    }
-
-    &.faded-left.faded-right.faded-bottom:after {
-        box-shadow: inset 0 (-$offset/2) $blur-radius $spread-radius;
-    }
-
-    &.faded-left.faded-top.faded-bottom:after {
-        box-shadow: inset ($offset/2) 0 $blur-radius $spread-radius;
-    }
-
-    &.faded-left.faded-top.faded-right:after {
-        box-shadow: inset 0 ($offset/2) $blur-radius $spread-radius;
-    }
-
-    &.faded-all:after, &.faded-left.faded-top.faded-right.faded-bottom:after {
-        box-shadow: inset 0 0 $blur-radius $spread-radius;
-    }
-}
-*/
+  .carousel-img {
+    min-width: 40%;
+    max-width: 40%;
+  }
+  
+  .carousel-item {
+    height: 36rem;
+  }
+  
+  .carousel-img {
+    height: 32rem;
+  }
+  }
 
