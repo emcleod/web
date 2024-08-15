@@ -1,0 +1,86 @@
+body {
+    display: grid;
+    grid-template-areas: 
+        "header"
+        "main "
+        "footer";
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    margin: 0;
+    height: 100vh;
+}
+
+header {
+    grid-area: header;
+    background: #333;
+    color: #fff;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+main {
+    grid-area: main;
+    display: grid;
+    grid-template-areas:
+        "canvas buttons"
+        "options options";
+    grid-template-columns: 3fr 1fr;
+    grid-template-rows: 1fr auto;
+    padding: 2rem;
+}
+
+#canvas-container {
+    grid-area: canvas;
+    padding: 3rem;
+    background: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* TODO: need a minimum width and height */
+#canvas-container canvas {
+    grid-area: canvas;
+    width: 60%;   /* don't forget to change in setupCanvas if this is changed */
+    aspect-ratio: 1.414; /* don't forget to change in setupCanvas if this is changed */
+    height: auto;
+    border: 1px solid #333;
+}
+
+#button-container {
+    grid-area: buttons;
+    background: #ddd;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+#buttons {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#buttons button {
+    background: #ccc;
+    border: none;
+    color: #333;
+    padding: 10.5rem 1rem;
+    border-radius: 0.25rem;
+    margin: 0.25rem 0.5rem;
+    flex: 1 1 30%;
+}
+
+#options-container {
+    grid-area: options;
+    background: #ccc;
+    padding: 2rem;
+}
+
+footer {
+    grid-area: footer;
+    background: #333;
+    color: #fff;
+    padding: 1rem;
+    text-align: center;
+}

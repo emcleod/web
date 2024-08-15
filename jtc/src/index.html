@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JTC</title>
+</head>
+
+<body>
+    <header>
+        <button id="new">New</button>
+        <button id="save">Save to File</button>
+        <button id="print">Print</button>
+    </header>
+    <main>
+        <section id="canvas-container">
+            <canvas id="drawing-canvas"></canvas>
+        </section>
+
+        <section id="button-container">
+            <button id="straight-line">Straight Line</button>
+            <button id="curved-line">Curved Lines</button>
+            <button id="follow-pointer">Follow Pointer</button>
+            <button id="circle">Circles</button>
+            <button id="oval">Ovals</button>
+            <button id="square">Squares</button>
+            <button id="rectangle">Rectangles</button>
+            <button id="triangle">Triangles</button>
+            <button id="polygon">Polygons</button>
+            <button id="flower">Flowers</button>
+            <button id="selection">Select</button>
+        </section>
+
+        <section id="options-container">
+            <section>
+                <div id="straight-line-options">
+                    <label for="line-style">Line Style</label>
+                    <select id="line-style"></select>
+                </div>
+
+                <div id="curved-line-options">
+                    <label for="line-style">Line Style</label>
+                    <select id="line-style"></select>
+                </div>
+
+                <div id="follow-pointer-options">
+                    <label for="line-style">Line Style</label>
+                    <select id="line-style"></select>
+                </div>
+
+                <div id="circle-options">
+                    <label for="line-style">Line Style</label>
+                    <select id="line-style"></select>
+                    <label for="radius">Radius</label>
+                    <input type="number" id="radius">
+                    <label for="dots">Dots</label>
+                    <input type="number" id="dots">
+                </div>
+            </section>
+        </section>
+    </main>
+    <footer>Footer</footer>
+</body>
+
+</html>
