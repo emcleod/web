@@ -1,45 +1,57 @@
-export const CircleTool = {
-    name: 'circle',
-    buttonId: 'circle-btn',
+export const PolygonTool = {
+    name: 'polygon',
+    buttonId: 'polygon-btn',
     activate: function(canvas) {
         canvas.defaultCursor = 'crosshair';
         let isDrawing = false;
-        let circle;
-        let centerPoint;
+        let polygon;
+        let startPoint;
+        const sides = 8;
 
-        const startDrawing = (o) => {
-            isDrawing = true;
-            centerPoint = canvas.getPointer(o.e);
-            circle = new fabric.Circle({
-                left: centerPoint.x,
-                top: centerPoint.y,
+        const drawOctagon = (center, radius) => {
+            const points = [];
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * 2 * Math.PI;
+                const x = center.x + radius * Math.cos(angle);
+                const y = center.y + radius * Math.sin(angle);
+                points.push({ x, y });
+            }
+            return new fabric.Polygon(points, {
+                left: center.x,
+                top: center.y,
                 originX: 'center',
                 originY: 'center',
-                radius: 0,
                 stroke: 'black',
                 strokeWidth: 2,
                 fill: 'transparent',
                 selectable: false,
                 evented: false
             });
-            canvas.add(circle);
+        };
+
+        const startDrawing = (o) => {
+            isDrawing = true;
+            startPoint = canvas.getPointer(o.e);
+            polygon = drawOctagon(startPoint, 0);
+            canvas.add(polygon);
         };
 
         const keepDrawing = (o) => {
             if (!isDrawing) return;
             const pointer = canvas.getPointer(o.e);
             const radius = Math.sqrt(
-                Math.pow(pointer.x - centerPoint.x, 2) +
-                Math.pow(pointer.y - centerPoint.y, 2)
+                Math.pow(pointer.x - startPoint.x, 2) +
+                Math.pow(pointer.y - startPoint.y, 2)
             );
-            circle.set({ radius: radius });
-            canvas.renderAll();
+            canvas.remove(polygon);
+            polygon = drawOctagon(startPoint, radius);
+            canvas.add(polygon);
         };
 
         const finishDrawing = (o) => {
             if (!isDrawing) return;
             isDrawing = false;
-            circle.setCoords();
+            polygon.setCoords();
         };
 
         canvas.on('mouse:down', startDrawing);
@@ -61,6 +73,3 @@ export const CircleTool = {
         }
     }
 };
-
-//TODO: need the ability to add evenly-spaced dots along the edges
-//TODO: need the ability to add n radial lines

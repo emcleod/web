@@ -1,38 +1,48 @@
-export const StraightLineTool = {
-    name: 'straight-line',
-    buttonId: 'straight-line-btn',
+export const TriangleTool = {
+    name: 'triangle',
+    buttonId: 'triangle-btn',
     activate: function(canvas) {
         canvas.defaultCursor = 'crosshair';
         let isDrawing = false;
         let startPoint;
-        let line;
-    
+        let triangle;
+
         const startDrawing = (o) => {
             isDrawing = true;
             startPoint = canvas.getPointer(o.e);
-            line = new fabric.Line([startPoint.x, startPoint.y, startPoint.x, startPoint.y], {
+            triangle = new fabric.Triangle({
+                left: startPoint.x,
+                top: startPoint.y,
+                width: 0,
+                height: 0,
                 stroke: 'black',
                 strokeWidth: 2,
-                selectable:false,
+                fill: 'transparent',
+                selectable: false,
                 evented: false
             });
-            canvas.add(line);
-        }
-    
+            canvas.add(triangle);
+        };
+
         const keepDrawing = (o) => {
             if (!isDrawing) return;
             const pointer = canvas.getPointer(o.e);
-            line.set({
-                x2: pointer.x,
-                y2: pointer.y
+            const width = Math.abs(pointer.x - startPoint.x);
+            const height = Math.abs(pointer.y - startPoint.y);
+            triangle.set({
+                width: width * 2,
+                height: height,
+                left: Math.min(startPoint.x, pointer.x),
+                top: Math.min(startPoint.y, pointer.y)
             });
             canvas.renderAll();
-        }
-    
+        };
+
         const finishDrawing = (o) => {
+            if (!isDrawing) return;
             isDrawing = false;
-            line.setCoords();
-        }
+            triangle.setCoords();
+        };
 
         canvas.on('mouse:down', startDrawing);
         canvas.on('mouse:move', keepDrawing);
@@ -53,3 +63,4 @@ export const StraightLineTool = {
         }
     }
 };
+

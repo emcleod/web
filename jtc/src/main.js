@@ -1,102 +1,86 @@
 import './styles.css'
-import { fabric } from 'fabric';
-import { setupCircleTool } from './tools/Circle';
-import { setupCurvedLineTool } from './tools/CurvedLine';
-import { setupStraightLineTool } from './tools/StraightLine';
-import { setupSelectionTool } from './tools/Selection';
-import { setupSquareTool } from './tools/Square';
+import { CircleTool } from './tools/Circle';
+import { CurvedLineTool } from './tools/CurvedLine';
+import { PolygonTool } from './tools/PolygonTool';
+import { StraightLineTool } from './tools/StraightLine';
+import { SelectionTool } from './tools/Selection';
+import { SquareTool } from './tools/Square';
+import { TriangleTool } from './tools/Triangle';
+import { CanvasManager } from './CanvasManager';
 
-(function() {
+(function () {
     'use strict';
 
-    let canvas;
-    let currentTool = null;
-
-    // set up canvas
-    const canvasWidthPercentage = 0.6; // 60% of container width - remember to change in css if this is changed
-    const canvasAspectRatio = 1.414 // maintain aspect ratio - remember to change in css if this is changed
-
-    function setupCanvas() {
-        const canvasContainer = document.getElementById('canvas-container');
-        const canvasElement = document.getElementById('drawing-canvas');        
-        const containerWidth = canvasContainer.offsetWidth;
-        const canvasWidth = containerWidth * canvasWidthPercentage; 
-        const canvasHeight = canvasWidth / canvasAspectRatio
-        canvasElement.width = canvasWidth;
-        canvasElement.height = canvasHeight;
-        canvas = new fabric.Canvas('drawing-canvas', {
-            width: canvasWidth,
-            height: canvasHeight
-        });    
-    }
-
-    function resizeCanvas() {
-        const canvasContainer = document.getElementById('canvas-container');
-        const canvasElement = document.getElementById('drawing-canvas');
-        const containerWidth = canvasContainer.offsetWidth;
-        const canvasWidth = containerWidth * canvasWidthPercentage;
-        const canvasHeight = canvasWidth / canvasAspectRatio;
-        canvasElement.width = canvasWidth;
-        canvasElement.height = canvasHeight;
-        canvas.setWidth(canvasWidth);
-        canvas.setHeight(canvasHeight);
-        canvas.renderAll();
-    }
-    
     document.addEventListener('DOMContentLoaded', () => {
-        setupCanvas();
-        window.addEventListener('resize', resizeCanvas);
-    
-        const circleTool = setupCircleTool(canvas);
-        const straightLineTool = setupStraightLineTool(canvas);
-        const curvedLineTool = setupCurvedLineTool(canvas);
-        const squareTool = setupSquareTool(canvas);
-        const selectionTool = setupSelectionTool(canvas);
-    
-        document.getElementById('circle').addEventListener('click', () => {
-            if (currentTool) {
-                currentTool.deactivate();
-            }
-            circleTool.activate();
-            currentTool = circleTool;
-        });
-    
-        document.getElementById('straight-line').addEventListener('click', () => {
-            if (currentTool) {
-                currentTool.deactivate();
-            }
-            straightLineTool.activate();
-            currentTool = straightLineTool;
+        const canvasContainer = document.getElementById('canvas-container');
+        const containerWidth = canvasContainer.offsetWidth;
+
+        const canvasManager = new CanvasManager('canvas-container', 'drawing-canvas', containerWidth);
+        canvasManager.setupCanvas();
+
+        // Register drawing tools
+        canvasManager.registerDrawingTool(CircleTool);
+        canvasManager.registerDrawingTool(PolygonTool);
+        canvasManager.registerDrawingTool(StraightLineTool);
+        canvasManager.registerDrawingTool(TriangleTool);
+        canvasManager.registerDrawingTool(CurvedLineTool);
+        canvasManager.registerDrawingTool(SquareTool);
+        // Register editing tools
+        canvasManager.registerEditingTool(SelectionTool);
+
+
+        // Setup tool activation buttons
+        const tools = [CircleTool, StraightLineTool, CurvedLineTool,
+            PolygonTool, SquareTool, TriangleTool, SelectionTool];
+        tools.forEach(tool => {
+            document.getElementById(tool.buttonId).addEventListener('click', () => {
+                canvasManager.activateTool(tool.name).catch(error => {
+                    console.error(`Failed to activate tool: ${tool.name}`, error);
+                });
+            });
         });
 
-        document.getElementById('curved-line').addEventListener('click', () => {
-            if (currentTool) {
-                currentTool.deactivate();
-            }
-            curvedLineTool.activate();
-            currentTool = curvedLineTool;
-        });
-
-        document.getElementById('square').addEventListener('click', () => {
-            if (currentTool) {
-                currentTool.deactivate();
-            }
-            squareTool.activate();
-            currentTool = squareTool;
-        });
-
-        document.getElementById('selection').addEventListener('click', () => {
-            if (currentTool) {
-                currentTool.deactivate();
-            }
-            selectionTool.activate();
-            currentTool = selectionTool;
-        });
-    
         // Activate selection tool by default
-        selectionTool.activate();
-        currentTool = selectionTool;
-    });
+        canvasManager.activateTool(SelectionTool.name).catch(error => {
+            console.error('Failed to activate selection tool', error);
+        });
 
+        // Enable resize
+        window.addEventListener('resize', () => {
+            canvasManager.containerWidth = canvasContainer.offsetWidth;
+            canvasManager.resizeCanvas();
+        });
+
+        // Set up undo/redo buttons
+        const undoButton = document.getElementById('undo-btn');
+        const redoButton = document.getElementById('redo-btn');
+
+        undoButton.addEventListener('click', () => canvasManager.undo());
+        redoButton.addEventListener('click', () => canvasManager.redo());
+
+        // Update undo/redo button states
+        function updateUndoRedoButtons() {
+            const canUndo = canvasManager.canUndo();
+            const canRedo = canvasManager.canRedo();
+            console.log("Updating buttons. Can undo:", canUndo, "Can redo:", canRedo);
+            undoButton.disabled = !canUndo;
+            redoButton.disabled = !canRedo;
+        }
+
+        // Subscribe to state changes
+        canvasManager.subscribe('stateChanged', updateUndoRedoButtons);
+
+        // Initial update of button states
+        updateUndoRedoButtons();
+
+        // Listen for object:modified for complex modifications
+        canvasManager.canvas.on('object:modified', (e) => {
+            // This covers cases like programmatic changes or complex modifications
+            // that might not trigger a mouse:up event
+            console.log('Object modified programmatically');
+            canvasManager.saveState();
+        });
+
+    });
 })();
 
