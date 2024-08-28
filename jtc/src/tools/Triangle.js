@@ -19,7 +19,8 @@ export const TriangleTool = {
                 strokeWidth: 2,
                 fill: 'transparent',
                 selectable: false,
-                evented: false
+                evented: false,
+                objectCaching: false
             });
             canvas.add(triangle);
         };
@@ -41,6 +42,7 @@ export const TriangleTool = {
         const finishDrawing = (o) => {
             if (!isDrawing) return;
             isDrawing = false;
+            triangle.objectCaching = true;
             triangle.setCoords();
         };
 

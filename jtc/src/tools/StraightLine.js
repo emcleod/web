@@ -14,7 +14,8 @@ export const StraightLineTool = {
                 stroke: 'black',
                 strokeWidth: 2,
                 selectable:false,
-                evented: false
+                evented: false,
+                objectCaching: false
             });
             canvas.add(line);
         }
@@ -31,6 +32,7 @@ export const StraightLineTool = {
     
         const finishDrawing = (o) => {
             isDrawing = false;
+            line.objectCaching = true;
             line.setCoords();
         }
 

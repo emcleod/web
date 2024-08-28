@@ -39,6 +39,7 @@ main {
     align-items: center;
 }
 
+
 /* TODO: need a minimum width and height */
 #canvas-container canvas {
     grid-area: canvas;
@@ -75,6 +76,16 @@ main {
     grid-area: options;
     background: #ccc;
     padding: 2rem;
+    transition: height 0.3s ease-out;
+}
+
+.tool-options {
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+
+.tool-options[data-remove="true"] {
+    opacity: 0;
 }
 
 footer {

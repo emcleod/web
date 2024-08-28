@@ -25,7 +25,8 @@ export const PolygonTool = {
                 strokeWidth: 2,
                 fill: 'transparent',
                 selectable: false,
-                evented: false
+                evented: false,
+                objectCaching: false
             });
         };
 
@@ -51,6 +52,7 @@ export const PolygonTool = {
         const finishDrawing = (o) => {
             if (!isDrawing) return;
             isDrawing = false;
+            polygon.objectCaching = true;
             polygon.setCoords();
         };
 
