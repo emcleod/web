@@ -5,17 +5,17 @@ import {
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
   DEFAULT_SEGMENTS,
-} from "./ToolUtils";
+} from './ToolUtils';
 
 export const CircleTool = {
   circleCounter: 0,
   groupCounter: 0,
-  name: "circle",
-  buttonId: "circle-btn",
+  name: 'circle',
+  buttonId: 'circle-btn',
   selectedCircle: null,
   activate: function (canvas) {
     this.canvas = canvas;
-    canvas.defaultCursor = "crosshair";
+    canvas.defaultCursor = 'crosshair';
     let isDrawing = false;
     let circle;
     let centerPoint;
@@ -27,12 +27,12 @@ export const CircleTool = {
         __uid: this.circleCounter++,
         left: centerPoint.x,
         top: centerPoint.y,
-        originX: "center",
-        originY: "center",
+        originX: 'center',
+        originY: 'center',
         radius: 0,
         stroke: DEFAULT_LINE_TYPE,
         strokeWidth: DEFAULT_LINE_WIDTH,
-        fill: "transparent",
+        fill: 'transparent',
         selectable: false,
         evented: false,
         objectCaching: false,
@@ -62,19 +62,19 @@ export const CircleTool = {
       canvas.renderAll();
     };
 
-    canvas.on("mouse:down", startDrawing);
-    canvas.on("mouse:move", keepDrawing);
-    canvas.on("mouse:up", finishDrawing);
+    canvas.on('mouse:down', startDrawing);
+    canvas.on('mouse:move', keepDrawing);
+    canvas.on('mouse:up', finishDrawing);
 
     this.cleanupFunctions = [
-      () => canvas.off("mouse:down", startDrawing),
-      () => canvas.off("mouse:move", keepDrawing),
-      () => canvas.off("mouse:up", finishDrawing),
+      () => canvas.off('mouse:down', startDrawing),
+      () => canvas.off('mouse:move', keepDrawing),
+      () => canvas.off('mouse:up', finishDrawing),
     ];
   },
 
   deactivate: function (canvas) {
-    canvas.defaultCursor = "default";
+    canvas.defaultCursor = 'default';
     if (this.cleanupFunctions) {
       this.cleanupFunctions.forEach((fn) => fn());
       this.cleanupFunctions = [];
@@ -88,14 +88,16 @@ export const CircleTool = {
       this.selectedCircle = circle;
     }
     if (!this.selectedCircle) return;
-    const container = document.getElementById("options-container");
-  
+    const container = document.getElementById('options-container');
+
     const defaultValues = {
       strokeWidth: DEFAULT_LINE_WIDTH,
       strokeDashArray: null,
       segments: 0,
     };
-  
+
+    //TODO if the circle is in a group, use the values from the group to populate
+    // these values
     const currentValues = this.selectedCircle
       ? {
           strokeWidth: this.selectedCircle.strokeWidth,
@@ -103,25 +105,25 @@ export const CircleTool = {
           segments: this.selectedCircle.segments || 0,
         }
       : defaultValues;
-  
-    let circleOptions = document.querySelector(".circle-options");
+
+    let circleOptions = document.querySelector('.circle-options');
     if (!circleOptions) {
       removeToolOptions();
-      circleOptions = document.createElement("div");
-      circleOptions.classList.add("tool-options", "circle-options");
+      circleOptions = document.createElement('div');
+      circleOptions.classList.add('tool-options', 'circle-options');
       circleOptions.innerHTML = `
       <h2>Circle Options</h2>
-      Line width: <input type="number" class="line-width" value="${currentValues.strokeWidth}">
+      Line width: <input type='number' class='line-width' value='${currentValues.strokeWidth}'>
       Line type:
-      <select class="line-type">
-        <option value="${LineType.SOLID}" ${!currentValues.strokeDashArray ? "selected" : ""}>Solid</option>
-        <option value="${LineType.DOTTED}" ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1 ? "selected" : ""}>Dotted</option>
-        <option value="${LineType.DASHED}" ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1 ? "selected" : ""}>Dashed</option>
+      <select class='line-type'>
+        <option value='${LineType.SOLID}' ${!currentValues.strokeDashArray ? 'selected' : ''}>Solid</option>
+        <option value='${LineType.DOTTED}' ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1 ? 'selected' : ''}>Dotted</option>
+        <option value='${LineType.DASHED}' ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1 ? 'selected' : ''}>Dashed</option>
       </select>
-      Segments: <input type="number" class="segments" value="${currentValues.segments}">
-      <button class="btn finished" data-action="finish">Finished!</button>
-    `;      
-  
+      Segments: <input type='number' class='segments' value='${currentValues.segments}'>
+      <button class='btn finished' data-action='finish'>Finished!</button>
+    `;
+
       if (container.firstChild) {
         container.insertBefore(circleOptions, container.firstChild);
       } else {
@@ -130,24 +132,29 @@ export const CircleTool = {
       fadeIn(circleOptions);
     } else {
       // Update existing options
-      circleOptions.querySelector(".line-width").value = currentValues.strokeWidth;
-      circleOptions.querySelector(".line-type").value =
+      circleOptions.querySelector('.line-width').value =
+        currentValues.strokeWidth;
+      circleOptions.querySelector('.line-type').value =
         currentValues.strokeDashArray
           ? currentValues.strokeDashArray[0] === 1
             ? LineType.DOTTED
             : LineType.DASHED
           : LineType.SOLID;
-      circleOptions.querySelector(".segments").value = currentValues.segments;
+      circleOptions.querySelector('.segments').value = currentValues.segments;
       container.insertBefore(circleOptions, container.firstChild);
     }
-  
+
     // Add or update the event listener
-    circleOptions.addEventListener("click", (event) => {
+    circleOptions.addEventListener('click', (event) => {
       const target = event.target;
-      if (target.dataset.action === "finish") {
-        const lineWidth = parseInt(circleOptions.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
-        const lineType = circleOptions.querySelector(".line-type").value;
-        const segments = parseInt(circleOptions.querySelector(".segments").value) || DEFAULT_SEGMENTS;
+      if (target.dataset.action === 'finish') {
+        const lineWidth =
+          parseInt(circleOptions.querySelector('.line-width').value) ||
+          DEFAULT_LINE_WIDTH;
+        const lineType = circleOptions.querySelector('.line-type').value;
+        const segments =
+          parseInt(circleOptions.querySelector('.segments').value) ||
+          DEFAULT_SEGMENTS;
         if (this.selectedCircle) {
           this.decorate(this.selectedCircle, lineWidth, lineType, segments);
         }
@@ -165,7 +172,7 @@ export const CircleTool = {
     // Remove existing group if it exists
     const existingGroup = this.canvas
       .getObjects()
-      .find((obj) => obj.__circle_uid === circle.__uid && obj.type === "group");
+      .find((obj) => obj.__circle_uid === circle.__uid && obj.type === 'group');
     if (existingGroup) {
       this.canvas.remove(existingGroup);
     }
@@ -189,7 +196,6 @@ export const CircleTool = {
     const combinedGroup = this._createGroup(circle, groupObjects);
     // Remove the original circle from the canvas if it's not part of a group
     if (!existingGroup) {
-      console.log(`Removing original circle ${circle.__uid} from the canvas`);
       this.canvas.remove(circle);
     }
     // Add the combined group to the canvas
@@ -204,8 +210,8 @@ export const CircleTool = {
       stroke: circle.stroke,
       strokeWidth: strokeWidth,
       fill: circle.fill,
-      originX: "center",
-      originY: "center",
+      originX: 'center',
+      originY: 'center',
       strokeDashArray: strokeDashArray,
       selectable: false,
       evented: false,
@@ -223,8 +229,8 @@ export const CircleTool = {
         __circle_uid: circle.__uid,
         stroke: circle.stroke,
         strokeWidth: strokeWidth,
-        originX: "center",
-        originY: "center",
+        originX: 'center',
+        originY: 'center',
         strokeDashArray: strokeDashArray,
         selectable: false,
         evented: false,
@@ -238,8 +244,8 @@ export const CircleTool = {
       __circle_uid: circle.__uid,
       left: circle.left,
       top: circle.top,
-      originX: "center",
-      originY: "center",
+      originX: 'center',
+      originY: 'center',
       selectable: false,
       evented: false,
     });

@@ -1,10 +1,20 @@
-import { fadeIn, removeToolOptions, LineType, DEFAULT_LINE_TYPE, DEFAULT_LINE_WIDTH, DEFAULT_SEGMENTS } from "./ToolUtils";
+import {
+  fadeIn,
+  removeToolOptions,
+  LineType,
+  DEFAULT_LINE_TYPE,
+  DEFAULT_LINE_WIDTH,
+  DEFAULT_SEGMENTS,
+} from "./ToolUtils";
 
 export const SquareTool = {
+  squareCounter: 0,
+  groupCounter: 0,
   name: "square",
   buttonId: "square-btn",
   selectedSquare: null,
   activate: function (canvas) {
+    this.canvas = canvas;
     canvas.defaultCursor = "crosshair";
     let isDrawing = false;
     let square;
@@ -28,6 +38,7 @@ export const SquareTool = {
         objectCaching: false,
       });
       canvas.add(square);
+      this.selectedSquare = square;
     };
 
     const keepDrawing = (o) => {
@@ -48,10 +59,8 @@ export const SquareTool = {
       isDrawing = false;
       square.objectCaching = true;
       square.setCoords();
-      if (!this.selectedSquare) {
-        this.selectedSquare = square;
-        this.editingTool();
-      }
+      this.selectedSquare = square;
+      this.editingTool();
       canvas.renderAll();
     };
 
@@ -78,7 +87,7 @@ export const SquareTool = {
 
   editingTool: function (square = null) {
     if (square) {
-        this.selectedSquare = square;
+      this.selectedSquare = square;
     }
     if (!this.selectedSquare) return;
     const container = document.getElementById("options-container");
@@ -89,6 +98,8 @@ export const SquareTool = {
       segments: 0,
     };
 
+    //TODO if the square is in a group, use the values from the group to populate
+    // these values
     const currentValues = square
       ? {
           strokeWidth: square.strokeWidth,
@@ -97,46 +108,37 @@ export const SquareTool = {
         }
       : defaultValues;
 
-      let squareOptions = document.querySelector(".square-options");
+    let squareOptions = document.querySelector(".square-options");
     if (!squareOptions) {
       removeToolOptions();
       squareOptions = document.createElement("div");
       squareOptions.classList.add("tool-options", "square-options");
       squareOptions.innerHTML = `
-            <h2>Square Options</h2>
-            Line width: <input type="number" class="line-width" value="${
-              currentValues.strokeWidth
-            }">
-            Line type: 
-            <select class="line-type">
-                <option value="${LineType.SOLID}" ${
+      <h2>Square Options</h2>
+      Line width: <input type='number' class='line-width' value='${
+        currentValues.strokeWidth
+      }'>
+      Line type:
+      <select class='line-type'>
+        <option value='${LineType.SOLID}' ${
         !currentValues.strokeDashArray ? "selected" : ""
       }>Solid</option>
-                <option value="${LineType.DOTTED}" ${
+        <option value='${LineType.DOTTED}' ${
         currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1
           ? "selected"
           : ""
       }>Dotted</option>
-                <option value="${LineType.DASHED}" ${
+        <option value='${LineType.DASHED}' ${
         currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1
           ? "selected"
           : ""
       }>Dashed</option>
-            </select>
-            Segments: <input type="number" class="segments" value="${
-              currentValues.segments
-            }">
-            <button class="btn finished">Finished!</button>
-        `;
-      const finishedBtn = squareOptions.querySelector(".finished");
-      finishedBtn.addEventListener("click", () => {
-        const lineWidth = squareOptions.querySelector(".line-width").value;
-        const lineType = squareOptions.querySelector(".line-type").value;
-        const segments = squareOptions.querySelector(".segments").value;
-        if (this.selectedSquare) {
-          this.decorate(this.selectedSquare, lineWidth, lineType, segments);
-        }
-      });
+      </select>
+      Segments: <input type='number' class='segments' value='${
+        currentValues.segments
+      }'>
+      <button class='btn finished' data-action='finish'>Finished!</button>
+    `;
       if (container.firstChild) {
         container.insertBefore(squareOptions, container.firstChild);
       } else {
@@ -156,6 +158,23 @@ export const SquareTool = {
       squareOptions.querySelector(".segments").value = currentValues.segments;
       container.insertBefore(squareOptions, container.firstChild);
     }
+
+    // Add or update the event listener
+    squareOptions.addEventListener("click", (event) => {
+      const target = event.target;
+      if (target.dataset.action === "finish") {
+        const lineWidth =
+          parseInt(squareOptions.querySelector(".line-width").value) ||
+          DEFAULT_LINE_WIDTH;
+        const lineType = squareOptions.querySelector(".line-type").value;
+        const segments =
+          parseInt(squareOptions.querySelector(".segments").value) ||
+          DEFAULT_SEGMENTS;
+        if (this.selectedSquare) {
+          this.decorate(this.selectedSquare, lineWidth, lineType, segments);
+        }
+      }
+    });
   },
 
   decorate(
@@ -164,54 +183,93 @@ export const SquareTool = {
     lineType = LineType.SOLID,
     segments = DEFAULT_SEGMENTS
   ) {
-    if (!square || !square.canvas) {
-      console.log("Square is no longer on the canvas");
-      return;
+    if (!square || !this.canvas) return;
+  
+    // Remove existing group if it exists
+    const existingGroup = this.canvas
+      .getObjects()
+      .find((obj) => obj.__square_uid === square.__uid && obj.type === "group");
+    if (existingGroup) {
+      this.canvas.remove(existingGroup);
     }
-    console.log("Decorating square");
-    console.log(
-      `Current square style: ${square.strokeWidth}, ${square.strokeDashArray}, ${square.segments}`
-    );
-    square.set({
-      strokeWidth: parseInt(lineWidth),
-      strokeDashArray:
-        lineType === LineType.DOTTED
-          ? [1, 1]
-          : lineType === LineType.DASHED
-          ? [5, 5]
-          : null,
-      segments: parseInt(segments),
-    });
-    console.log(
-      `Updated square style: ${square.strokeWidth}, ${square.strokeDashArray}, ${square.segments}`
-    );
-
-    // Remove existing segment lines
-    square.canvas.getObjects("line").forEach((obj) => {
-      if (obj.segmentOf === square) {
-        square.canvas.remove(obj);
-      }
-    });
-    // Draw segments if needed
+    const strokeDashArray =
+      lineType === LineType.DOTTED
+        ? [1, 1]
+        : lineType === LineType.DASHED
+        ? [5, 5]
+        : null;
+  
+    let groupObjects = [];
+    // Create new square
+    const newSquare = this._createSquare(square, lineWidth, strokeDashArray);
+    groupObjects.push(newSquare);
+    // Create new spokes if segments > 1
     if (segments > 1) {
-      const centerX = square.left;
-      const centerY = square.top;
-      const radius = square.radius;
-      const angleStep = (2 * Math.PI) / segments;
-
-      for (let i = 0; i < segments; i++) {
-        const angle = i * angleStep;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
-
-        const line = new fabric.Line([centerX, centerY, x, y], {
-          stroke: square.stroke,
-          strokeWidth: square.strokeWidth / 2,
-        });
-        square.canvas.add(line);
-      }
+      groupObjects.push(
+        ...this._createSpokes(square, lineWidth, strokeDashArray, segments)
+      );
     }
-
-    square.canvas.renderAll();
+    // Create a group with all objects
+    const combinedGroup = this._createGroup(square, groupObjects);
+    // Remove the original square from the canvas if it's not part of a group
+    if (!existingGroup) {
+      this.canvas.remove(square);
+    }
+    // Add the combined group to the canvas
+    this.canvas.add(combinedGroup);
+    this.canvas.renderAll();
   },
+  
+  _createSquare(square, strokeWidth, strokeDashArray) {
+    return new fabric.Rect({
+      __uid: this.squareCounter++,
+      originX: "center",
+      originY: "center",
+      width: square.width,
+      height: square.height,
+      stroke: square.stroke,
+      strokeWidth: strokeWidth,
+      strokeDashArray: strokeDashArray,
+      fill: square.fill,
+      selectable: false,
+      evented: false,
+    });
+  },
+  
+  _createSpokes(square, strokeWidth, strokeDashArray, segments) {
+    const angleStep = (2 * Math.PI) / segments;
+    return Array.from({ length: segments }).map((_, i) => {
+      const angle = i * angleStep;
+      const x = square.left + square.width / 2 * Math.cos(angle);
+      const y = square.top + square.height / 2 * Math.sin(angle);
+  
+      return new fabric.Line([square.left, square.top, x, y], {
+        __square_uid: square.__uid,
+        stroke: square.stroke,
+        strokeWidth: strokeWidth,
+        strokeDashArray: strokeDashArray,
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        evented: false,
+      });
+    });
+  },
+  //TODO not removing previous group
+  //TODO segment calculation is completely wrong
+  
+  _createGroup(square, groupObjects) {
+    return new fabric.Group(groupObjects, {
+      __group_uid: this.groupCounter++,
+      __square_uid: square.__uid,
+      left: square.left,
+      top: square.top,
+      width: square.width,
+      height: square.height,
+      originX: "center",
+      originY: "center",
+      selectable: false,
+      evented: false,
+    });
+  }
 };
