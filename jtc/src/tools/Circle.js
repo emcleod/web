@@ -1,13 +1,4 @@
-import { fadeIn, removeToolOptions } from "./ToolUtils";
-
-const LineType = Object.freeze({
-  SOLID: "solid",
-  DOTTED: "dotted",
-  DASHED: "dashed",
-});
-const DEFAULT_LINE_WIDTH = 1;
-const DEFAULT_LINE_TYPE = "black";
-const DEFAULT_SEGMENTS = null;
+import { fadeIn, removeToolOptions, LineType, DEFAULT_LINE_TYPE, DEFAULT_LINE_WIDTH, DEFAULT_SEGMENTS } from "./ToolUtils";
 
 export const CircleTool = {
   name: "circle",
