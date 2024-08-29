@@ -1,10 +1,20 @@
-import { fadeIn, removeToolOptions, LineType, DEFAULT_LINE_TYPE, DEFAULT_LINE_WIDTH, DEFAULT_SEGMENTS } from "./ToolUtils";
+import {
+  fadeIn,
+  removeToolOptions,
+  LineType,
+  DEFAULT_LINE_TYPE,
+  DEFAULT_LINE_WIDTH,
+  DEFAULT_SEGMENTS,
+} from "./ToolUtils";
 
 export const CircleTool = {
+  circleCounter: 0,
+  groupCounter: 0,
   name: "circle",
   buttonId: "circle-btn",
   selectedCircle: null,
   activate: function (canvas) {
+    this.canvas = canvas;
     canvas.defaultCursor = "crosshair";
     let isDrawing = false;
     let circle;
@@ -14,6 +24,7 @@ export const CircleTool = {
       isDrawing = true;
       centerPoint = canvas.getPointer(o.e);
       circle = new fabric.Circle({
+        __uid: this.circleCounter++,
         left: centerPoint.x,
         top: centerPoint.y,
         originX: "center",
@@ -27,6 +38,7 @@ export const CircleTool = {
         objectCaching: false,
       });
       canvas.add(circle);
+      this.selectedCircle = circle; // update selectedCircle
     };
 
     const keepDrawing = (o) => {
@@ -45,10 +57,8 @@ export const CircleTool = {
       isDrawing = false;
       circle.objectCaching = true;
       circle.setCoords();
-      if (!this.selectedCircle) {
-        this.selectedCircle = circle;
-        this.editingTool();
-      }
+      this.selectedCircle = circle;
+      this.editingTool();
       canvas.renderAll();
     };
 
@@ -79,13 +89,13 @@ export const CircleTool = {
     }
     if (!this.selectedCircle) return;
     const container = document.getElementById("options-container");
-
+  
     const defaultValues = {
       strokeWidth: DEFAULT_LINE_WIDTH,
       strokeDashArray: null,
       segments: 0,
     };
-
+  
     const currentValues = this.selectedCircle
       ? {
           strokeWidth: this.selectedCircle.strokeWidth,
@@ -93,47 +103,25 @@ export const CircleTool = {
           segments: this.selectedCircle.segments || 0,
         }
       : defaultValues;
-
+  
     let circleOptions = document.querySelector(".circle-options");
     if (!circleOptions) {
       removeToolOptions();
       circleOptions = document.createElement("div");
       circleOptions.classList.add("tool-options", "circle-options");
       circleOptions.innerHTML = `
-                  <h2>Circle Options</h2>
-                  Line width: <input type="number" class="line-width" value="${
-                    currentValues.strokeWidth
-                  }">
-                  Line type:
-                  <select class="line-type">
-                      <option value="${LineType.SOLID}" ${
-        !currentValues.strokeDashArray ? "selected" : ""
-      }>Solid</option>
-                      <option value="${LineType.DOTTED}" ${
-        currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1
-          ? "selected"
-          : ""
-      }>Dotted</option>
-                      <option value="${LineType.DASHED}" ${
-        currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1
-          ? "selected"
-          : ""
-      }>Dashed</option>
-                  </select>
-                  Segments: <input type="number" class="segments" value="${
-                    currentValues.segments
-                  }">
-                  <button class="btn finished">Finished!</button>
-              `;
-      const finishedBtn = circleOptions.querySelector(".finished");
-      finishedBtn.addEventListener("click", () => {
-        const lineWidth = circleOptions.querySelector(".line-width").value;
-        const lineType = circleOptions.querySelector(".line-type").value;
-        const segments = circleOptions.querySelector(".segments").value;
-        if (this.selectedCircle) {
-          this.decorate(this.selectedCircle, lineWidth, lineType, segments);
-        }
-      });
+      <h2>Circle Options</h2>
+      Line width: <input type="number" class="line-width" value="${currentValues.strokeWidth}">
+      Line type:
+      <select class="line-type">
+        <option value="${LineType.SOLID}" ${!currentValues.strokeDashArray ? "selected" : ""}>Solid</option>
+        <option value="${LineType.DOTTED}" ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1 ? "selected" : ""}>Dotted</option>
+        <option value="${LineType.DASHED}" ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1 ? "selected" : ""}>Dashed</option>
+      </select>
+      Segments: <input type="number" class="segments" value="${currentValues.segments}">
+      <button class="btn finished" data-action="finish">Finished!</button>
+    `;      
+  
       if (container.firstChild) {
         container.insertBefore(circleOptions, container.firstChild);
       } else {
@@ -142,8 +130,7 @@ export const CircleTool = {
       fadeIn(circleOptions);
     } else {
       // Update existing options
-      circleOptions.querySelector(".line-width").value =
-        currentValues.strokeWidth;
+      circleOptions.querySelector(".line-width").value = currentValues.strokeWidth;
       circleOptions.querySelector(".line-type").value =
         currentValues.strokeDashArray
           ? currentValues.strokeDashArray[0] === 1
@@ -153,6 +140,19 @@ export const CircleTool = {
       circleOptions.querySelector(".segments").value = currentValues.segments;
       container.insertBefore(circleOptions, container.firstChild);
     }
+  
+    // Add or update the event listener
+    circleOptions.addEventListener("click", (event) => {
+      const target = event.target;
+      if (target.dataset.action === "finish") {
+        const lineWidth = parseInt(circleOptions.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
+        const lineType = circleOptions.querySelector(".line-type").value;
+        const segments = parseInt(circleOptions.querySelector(".segments").value) || DEFAULT_SEGMENTS;
+        if (this.selectedCircle) {
+          this.decorate(this.selectedCircle, lineWidth, lineType, segments);
+        }
+      }
+    });
   },
 
   decorate(
@@ -161,54 +161,87 @@ export const CircleTool = {
     lineType = LineType.SOLID,
     segments = DEFAULT_SEGMENTS
   ) {
-    if (!circle || !circle.canvas) {
-      console.log("Circle is no longer on the canvas");
-      return;
+    if (!circle || !this.canvas) return;
+    // Remove existing group if it exists
+    const existingGroup = this.canvas
+      .getObjects()
+      .find((obj) => obj.__circle_uid === circle.__uid && obj.type === "group");
+    if (existingGroup) {
+      this.canvas.remove(existingGroup);
     }
-    console.log("Decorating circle");
-    console.log(
-      `Current circle style: ${circle.strokeWidth}, ${circle.strokeDashArray}, ${circle.segments}`
-    );
-    circle.set({
-      strokeWidth: parseInt(lineWidth),
-      strokeDashArray:
-        lineType === LineType.DOTTED
-          ? [1, 1]
-          : lineType === LineType.DASHED
-          ? [5, 5]
-          : null,
-      segments: parseInt(segments),
-    });
-    console.log(
-      `Updated circle style: ${circle.strokeWidth}, ${circle.strokeDashArray}, ${circle.segments}`
-    );
-
-    // Remove existing segment lines
-    circle.canvas.getObjects("line").forEach((obj) => {
-      if (obj.segmentOf === circle) {
-        circle.canvas.remove(obj);
-      }
-    });
-    // Draw segments if needed
+    const strokeDashArray =
+      lineType === LineType.DOTTED
+        ? [1, 1]
+        : lineType === LineType.DASHED
+        ? [5, 5]
+        : null;
+    let groupObjects = [];
+    // Create new circle
+    const newCircle = this._createCircle(circle, lineWidth, strokeDashArray);
+    groupObjects.push(newCircle);
+    // Create new spokes if segments > 1
     if (segments > 1) {
-      const centerX = circle.left;
-      const centerY = circle.top;
-      const radius = circle.radius;
-      const angleStep = (2 * Math.PI) / segments;
-
-      for (let i = 0; i < segments; i++) {
-        const angle = i * angleStep;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
-
-        const line = new fabric.Line([centerX, centerY, x, y], {
-          stroke: circle.stroke,
-          strokeWidth: circle.strokeWidth / 2,
-        });
-        circle.canvas.add(line);
-      }
+      groupObjects.push(
+        ...this._createSpokes(circle, lineWidth, strokeDashArray, segments)
+      );
     }
+    // Create a group with all objects
+    const combinedGroup = this._createGroup(circle, groupObjects);
+    // Remove the original circle from the canvas if it's not part of a group
+    if (!existingGroup) {
+      console.log(`Removing original circle ${circle.__uid} from the canvas`);
+      this.canvas.remove(circle);
+    }
+    // Add the combined group to the canvas
+    this.canvas.add(combinedGroup);
+    this.canvas.renderAll();
+  },
 
-    circle.canvas.renderAll();
+  _createCircle(circle, strokeWidth, strokeDashArray) {
+    return new fabric.Circle({
+      __uid: this.circleCounter++,
+      radius: circle.radius,
+      stroke: circle.stroke,
+      strokeWidth: strokeWidth,
+      fill: circle.fill,
+      originX: "center",
+      originY: "center",
+      strokeDashArray: strokeDashArray,
+      selectable: false,
+      evented: false,
+    });
+  },
+
+  _createSpokes(circle, strokeWidth, strokeDashArray, segments) {
+    const angleStep = (2 * Math.PI) / segments;
+    return Array.from({ length: segments }).map((_, i) => {
+      const angle = i * angleStep;
+      const x2 = circle.radius * Math.cos(angle);
+      const y2 = circle.radius * Math.sin(angle);
+
+      return new fabric.Line([0, 0, x2, y2], {
+        __circle_uid: circle.__uid,
+        stroke: circle.stroke,
+        strokeWidth: strokeWidth,
+        originX: "center",
+        originY: "center",
+        strokeDashArray: strokeDashArray,
+        selectable: false,
+        evented: false,
+      });
+    });
+  },
+
+  _createGroup(circle, groupObjects) {
+    return new fabric.Group(groupObjects, {
+      __group_uid: this.groupCounter++,
+      __circle_uid: circle.__uid,
+      left: circle.left,
+      top: circle.top,
+      originX: "center",
+      originY: "center",
+      selectable: false,
+      evented: false,
+    });
   },
 };
