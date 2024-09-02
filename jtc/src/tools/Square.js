@@ -24,6 +24,7 @@ export const SquareTool = {
       isDrawing = true;
       centerPoint = canvas.getPointer(o.e);
       square = new fabric.Rect({
+        __uid: this.squareCounter++,
         left: centerPoint.x,
         top: centerPoint.y,
         originX: "center",
@@ -98,13 +99,11 @@ export const SquareTool = {
       segments: 0,
     };
 
-    //TODO if the square is in a group, use the values from the group to populate
-    // these values
-    const currentValues = square
+    const currentValues = this.selectedSquare
       ? {
-          strokeWidth: square.strokeWidth,
-          strokeDashArray: square.strokeDashArray,
-          segments: square.segments || 0,
+          strokeWidth: this.selectedSquare.strokeWidth,
+          strokeDashArray: this.selectedSquare.strokeDashArray,
+          segments: this.selectedSquare.segments || 0,
         }
       : defaultValues;
 
@@ -139,6 +138,7 @@ export const SquareTool = {
       }'>
       <button class='btn finished' data-action='finish'>Finished!</button>
     `;
+
       if (container.firstChild) {
         container.insertBefore(squareOptions, container.firstChild);
       } else {
@@ -184,7 +184,6 @@ export const SquareTool = {
     segments = DEFAULT_SEGMENTS
   ) {
     if (!square || !this.canvas) return;
-  
     // Remove existing group if it exists
     const existingGroup = this.canvas
       .getObjects()
@@ -198,10 +197,11 @@ export const SquareTool = {
         : lineType === LineType.DASHED
         ? [5, 5]
         : null;
-  
     let groupObjects = [];
     // Create new square
+    console.log(square);
     const newSquare = this._createSquare(square, lineWidth, strokeDashArray);
+    console.log(newSquare);
     groupObjects.push(newSquare);
     // Create new spokes if segments > 1
     if (segments > 1) {
@@ -219,18 +219,20 @@ export const SquareTool = {
     this.canvas.add(combinedGroup);
     this.canvas.renderAll();
   },
-  
+
   _createSquare(square, strokeWidth, strokeDashArray) {
     return new fabric.Rect({
       __uid: this.squareCounter++,
-      originX: "center",
-      originY: "center",
       width: square.width,
       height: square.height,
       stroke: square.stroke,
       strokeWidth: strokeWidth,
+      fill: "transparent",
       strokeDashArray: strokeDashArray,
-      fill: square.fill,
+      originX: "center",
+      originY: "center",
+      left: square.left,
+      top: square.top,
       selectable: false,
       evented: false,
     });
@@ -240,10 +242,14 @@ export const SquareTool = {
     const angleStep = (2 * Math.PI) / segments;
     return Array.from({ length: segments }).map((_, i) => {
       const angle = i * angleStep;
-      const x = square.left + square.width / 2 * Math.cos(angle);
-      const y = square.top + square.height / 2 * Math.sin(angle);
+      const x1 = square.left;
+      const y1 = square.top;
+      const halfWidth = square.width / 2;
+      const halfHeight = square.height / 2;
+      const x2 = x1 + halfWidth * Math.cos(angle);
+      const y2 = y1 + halfHeight * Math.sin(angle);
   
-      return new fabric.Line([square.left, square.top, x, y], {
+      return new fabric.Line([x1, y1, x2, y2], {
         __square_uid: square.__uid,
         stroke: square.stroke,
         strokeWidth: strokeWidth,
@@ -255,21 +261,39 @@ export const SquareTool = {
       });
     });
   },
-  //TODO not removing previous group
-  //TODO segment calculation is completely wrong
+  // _createSpokes(square, strokeWidth, strokeDashArray, segments) {
+  //   const angleStep = (2 * Math.PI) / segments;
+  //   return Array.from({ length: segments }).map((_, i) => {
+  //     const angle = i * angleStep;
+  //     const x1 = square.left;
+  //     const y1 = square.top;
+  //     const x2 = square.left + (square.width / 2) * Math.cos(angle);
+  //     const y2 = square.top + (square.height / 2) * Math.sin(angle);
   
+  //     return new fabric.Line([x1, y1, x2, y2], {
+  //       __square_uid: square.__uid,
+  //       stroke: square.stroke,
+  //       strokeWidth: strokeWidth,
+  //       strokeDashArray: strokeDashArray,
+  //       originX: "center",
+  //       originY: "center",
+  //       selectable: false,
+  //       evented: false,
+  //     });
+  //   });
+  // },
+
   _createGroup(square, groupObjects) {
     return new fabric.Group(groupObjects, {
       __group_uid: this.groupCounter++,
       __square_uid: square.__uid,
       left: square.left,
       top: square.top,
-      width: square.width,
-      height: square.height,
       originX: "center",
       originY: "center",
       selectable: false,
       evented: false,
     });
-  }
+  },
 };
+

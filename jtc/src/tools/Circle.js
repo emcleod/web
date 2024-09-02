@@ -222,10 +222,10 @@ export const CircleTool = {
     const angleStep = (2 * Math.PI) / segments;
     return Array.from({ length: segments }).map((_, i) => {
       const angle = i * angleStep;
-      const x2 = circle.radius * Math.cos(angle);
-      const y2 = circle.radius * Math.sin(angle);
+      const x = circle.radius * Math.cos(angle);
+      const y = circle.radius * Math.sin(angle);
 
-      return new fabric.Line([0, 0, x2, y2], {
+      return new fabric.Line([0, 0, x, y], {
         __circle_uid: circle.__uid,
         stroke: circle.stroke,
         strokeWidth: strokeWidth,
