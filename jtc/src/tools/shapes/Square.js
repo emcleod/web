@@ -199,9 +199,7 @@ export const SquareTool = {
         : null;
     let groupObjects = [];
     // Create new square
-    console.log(square);
     const newSquare = this._createSquare(square, lineWidth, strokeDashArray);
-    console.log(newSquare);
     groupObjects.push(newSquare);
     // Create new spokes if segments > 1
     if (segments > 1) {

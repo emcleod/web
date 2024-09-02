@@ -3,9 +3,10 @@ import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { PolygonTool } from "./tools/shapes/Polygon";
 import { StraightLineTool } from "./tools/shapes/StraightLine";
-import { SelectionTool } from "./tools/shapes/Selection";
+import { SpokesTool } from "./tools/shapes/Spokes";
 import { SquareTool } from "./tools/shapes/Square";
 import { TriangleTool } from "./tools/shapes/Triangle";
+import { SelectionTool } from "./tools/Selection";
 import { CanvasManager } from "./CanvasManager";
 
 (function () {
@@ -29,6 +30,7 @@ import { CanvasManager } from "./CanvasManager";
     canvasManager.registerDrawingTool(TriangleTool);
     canvasManager.registerDrawingTool(CurvedLineTool);
     canvasManager.registerDrawingTool(SquareTool);
+    canvasManager.registerDrawingTool(SpokesTool);
     // Register editing tools
     canvasManager.registerEditingTool(SelectionTool);
 
@@ -47,6 +49,7 @@ import { CanvasManager } from "./CanvasManager";
       StraightLineTool,
       CurvedLineTool,
       PolygonTool,
+      SpokesTool,
       SquareTool,
       TriangleTool,
     ];
