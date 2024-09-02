@@ -1,11 +1,11 @@
 import "./styles.css";
-import { CircleTool } from "./tools/Circle";
-import { CurvedLineTool } from "./tools/CurvedLine";
-import { PolygonTool } from "./tools/Polygon";
-import { StraightLineTool } from "./tools/StraightLine";
-import { SelectionTool } from "./tools/Selection";
-import { SquareTool } from "./tools/Square";
-import { TriangleTool } from "./tools/Triangle";
+import { CircleTool } from "./tools/shapes/Circle";
+import { CurvedLineTool } from "./tools/shapes/CurvedLine";
+import { PolygonTool } from "./tools/shapes/Polygon";
+import { StraightLineTool } from "./tools/shapes/StraightLine";
+import { SelectionTool } from "./tools/shapes/Selection";
+import { SquareTool } from "./tools/shapes/Square";
+import { TriangleTool } from "./tools/shapes/Triangle";
 import { CanvasManager } from "./CanvasManager";
 
 (function () {
