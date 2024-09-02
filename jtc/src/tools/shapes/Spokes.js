@@ -218,7 +218,7 @@ export const SpokesTool = {
         : null;
 
     const centerPoint = spoke.getCenterPoint();
-    const radius = spoke.width / 2; // Assuming the spoke is symmetrical
+    const radius = spoke.width / 2; 
 
     // Remove the old spoke
     this.canvas.remove(spoke);
@@ -240,7 +240,6 @@ export const SpokesTool = {
       spokeLines.push(line);
     }
 
-    // Create a new group with updated properties
     const newSpoke = new fabric.Group(spokeLines, {
       __group_uid: spoke.__group_uid,
       __spoke_uid: spoke.__spoke_uid,
@@ -256,5 +255,4 @@ export const SpokesTool = {
     this.selectedSpoke = newSpoke;
     this.canvas.renderAll();
   },
-  // You can add more methods here for editing the spoke
 };
