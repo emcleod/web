@@ -237,18 +237,25 @@ export const SquareTool = {
       evented: false,
     });
   },
-  
+
   _createSpokes(square, strokeWidth, strokeDashArray, segments) {
-    const angleStep = (2 * Math.PI) / segments;
-    return Array.from({ length: segments }).map((_, i) => {
-      const angle = i * angleStep;
-      const x1 = square.left;
-      const y1 = square.top;
-      const halfWidth = square.width / 2;
-      const halfHeight = square.height / 2;
-      const x2 = x1 + halfWidth * Math.cos(angle);
-      const y2 = y1 + halfHeight * Math.sin(angle);
+    const width = square.width / 2;
+    const height = square.height / 2;
+    const x1 = square.left;
+    const y1 = square.top;
   
+    return Array.from({ length: segments }).map((_, i) => {
+      const angle = (i / segments) * 2 * Math.PI;
+      let x2, y2;  
+      if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
+        // Intersects left or right edge
+        x2 = x1 + (Math.cos(angle) > 0 ? 1 : -1) * width;
+        y2 = y1 + Math.tan(angle) * (x2 - x1);
+      } else {
+        // Intersects top or bottom edge
+        y2 = y1 + (Math.sin(angle) > 0 ? 1 : -1) * height;
+        x2 = x1 + (y2 - y1) / Math.tan(angle);
+      }
       return new fabric.Line([x1, y1, x2, y2], {
         __square_uid: square.__uid,
         stroke: square.stroke,
@@ -261,27 +268,6 @@ export const SquareTool = {
       });
     });
   },
-  // _createSpokes(square, strokeWidth, strokeDashArray, segments) {
-  //   const angleStep = (2 * Math.PI) / segments;
-  //   return Array.from({ length: segments }).map((_, i) => {
-  //     const angle = i * angleStep;
-  //     const x1 = square.left;
-  //     const y1 = square.top;
-  //     const x2 = square.left + (square.width / 2) * Math.cos(angle);
-  //     const y2 = square.top + (square.height / 2) * Math.sin(angle);
-  
-  //     return new fabric.Line([x1, y1, x2, y2], {
-  //       __square_uid: square.__uid,
-  //       stroke: square.stroke,
-  //       strokeWidth: strokeWidth,
-  //       strokeDashArray: strokeDashArray,
-  //       originX: "center",
-  //       originY: "center",
-  //       selectable: false,
-  //       evented: false,
-  //     });
-  //   });
-  // },
 
   _createGroup(square, groupObjects) {
     return new fabric.Group(groupObjects, {
@@ -296,4 +282,3 @@ export const SquareTool = {
     });
   },
 };
-
