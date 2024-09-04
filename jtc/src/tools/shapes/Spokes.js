@@ -256,3 +256,5 @@ export const SpokesTool = {
     this.canvas.renderAll();
   },
 };
+
+//TODO: add randomness the same way that stars have

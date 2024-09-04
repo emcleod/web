@@ -12,10 +12,10 @@ const MAX_POINTS = 20;
 const DEFAULT_INNER_RADIUS_RATIO = 0.5;
 const MIN_INNER_RADIUS_RATIO = 0;
 const MAX_INNER_RADIUS_RATIO = 1.5;
-const DEFAULT_ROUNDING_RADIUS = 0;
-const MAX_ROUNDING_RADIUS = 0.5;
 const DEFAULT_RANDOMNESS = 0;
-const MAX_RANDOMNESS = 0.5;
+const MAX_RANDOMNESS = 0.1;
+const DEFAULT_DRAW_OUTER_LINES = false;
+const DEFAULT_DRAW_INNER_LINES = false;
 
 export const StarTool = {
   starCounter: 0,
@@ -39,9 +39,10 @@ export const StarTool = {
         0,
         DEFAULT_NUMBER_OF_POINTS,
         DEFAULT_INNER_RADIUS_RATIO,
-        DEFAULT_ROUNDING_RADIUS,
         DEFAULT_RANDOMNESS,
-        true
+        true,
+        DEFAULT_DRAW_INNER_LINES,
+        DEFAULT_DRAW_OUTER_LINES
       );
       canvas.add(star);
     };
@@ -59,9 +60,10 @@ export const StarTool = {
         radius,
         DEFAULT_NUMBER_OF_POINTS,
         DEFAULT_INNER_RADIUS_RATIO,
-        DEFAULT_ROUNDING_RADIUS,
         DEFAULT_RANDOMNESS,
-        true
+        true,
+        DEFAULT_DRAW_INNER_LINES,
+        DEFAULT_DRAW_OUTER_LINES
       );
       canvas.add(star);
       canvas.renderAll();
@@ -110,8 +112,9 @@ export const StarTool = {
       strokeDashArray: null,
       points: DEFAULT_NUMBER_OF_POINTS,
       innerRadiusRatio: DEFAULT_INNER_RADIUS_RATIO,
-      roundingRadius: DEFAULT_ROUNDING_RADIUS,
       randomness: DEFAULT_RANDOMNESS,
+      drawOuterLines: DEFAULT_DRAW_OUTER_LINES,
+      drawInnerLines: DEFAULT_DRAW_INNER_LINES,
       symmetrical: true,
     };
 
@@ -122,9 +125,15 @@ export const StarTool = {
           points: this.selectedStar.points || DEFAULT_NUMBER_OF_POINTS,
           innerRadiusRatio:
             this.selectedStar.innerRadiusRatio || DEFAULT_INNER_RADIUS_RATIO,
-          roundingRadius:
-            this.selectedStar.roundingRadius || DEFAULT_ROUNDING_RADIUS,
           randomness: this.selectedStar.randomness || DEFAULT_RANDOMNESS,
+          drawOuterLines:
+            this.selectedStar.drawOuterLines !== undefined
+              ? this.selectedStar.drawOuterLines
+              : DEFAULT_DRAW_OUTER_LINES,
+          drawInnerLines:
+            this.selectedStar.drawInnerLines !== undefined
+              ? this.selectedStar.drawInnerLines
+              : DEFAULT_DRAW_INNER_LINES,
           symmetrical:
             this.selectedStar.symmetrical !== undefined
               ? this.selectedStar.symmetrical
@@ -164,9 +173,6 @@ export const StarTool = {
           Inner radius ratio: <input type='range' class='inner-radius-ratio' value='${
             currentValues.innerRadiusRatio
           }' min='${MIN_INNER_RADIUS_RATIO}' max='${MAX_INNER_RADIUS_RATIO}' step='0.01'>
-          Rounding radius: <input type='range' class='rounding-radius' value='${
-            currentValues.roundingRadius
-          }' min='0' max='${MAX_ROUNDING_RADIUS}' step='0.01'>
           Randomness: <input type='range' class='randomness' value='${
             currentValues.randomness
           }' min='0' max='${MAX_RANDOMNESS}' step='0.01'>
@@ -178,6 +184,18 @@ export const StarTool = {
           </label>
           <button class='btn randomize'>Randomize</button>
           <button class='btn reset'>Reset</button>
+          <label>
+          <input type='checkbox' class='draw-outer-lines' ${
+            currentValues.drawOuterLines ? "checked" : ""
+          }>
+          Draw outer lines
+          </label>
+          <label>
+            <input type='checkbox' class='draw-inner-lines' ${
+              currentValues.drawInnerLines ? "checked" : ""
+            }>
+            Draw inner lines
+          </label>
           <button class='btn finished' data-action='finish'>Finished!</button>
         `;
 
@@ -199,9 +217,11 @@ export const StarTool = {
       starOptions.querySelector(".points").value = currentValues.points;
       starOptions.querySelector(".inner-radius-ratio").value =
         currentValues.innerRadiusRatio;
-      starOptions.querySelector(".rounding-radius").value =
-        currentValues.roundingRadius;
       starOptions.querySelector(".randomness").value = currentValues.randomness;
+      starOptions.querySelector(".draw-inner-lines").checked =
+        currentValues.drawInnerLines;
+      starOptions.querySelector(".draw-outer-lines").checked =
+        currentValues.drawOuterLines;
       starOptions.querySelector(".symmetrical").checked =
         currentValues.symmetrical;
       container.insertBefore(starOptions, container.firstChild);
@@ -226,8 +246,9 @@ export const StarTool = {
           "line-type",
           "points",
           "inner-radius-ratio",
-          "rounding-radius",
           "randomness",
+          "draw-inner-lines",
+          "draw-outer-lines",
           "symmetrical",
         ].some((cls) => target.classList.contains(cls))
       ) {
@@ -245,7 +266,9 @@ export const StarTool = {
   resetStar: function () {
     document.querySelector(".inner-radius-ratio").value =
       DEFAULT_INNER_RADIUS_RATIO;
-    document.querySelector(".rounding-radius").value = DEFAULT_ROUNDING_RADIUS;
+    document.querySelector(".randomness").value = DEFAULT_RANDOMNESS;
+    document.querySelector(".draw-inner-lines").checked = false;
+    document.querySelector(".draw-outer-lines").checked = false;
     document.querySelector(".randomness").value = DEFAULT_RANDOMNESS;
     document.querySelector(".symmetrical").checked = true;
     this.updateStar();
@@ -263,9 +286,6 @@ export const StarTool = {
     const innerRadiusRatio = parseFloat(
       document.querySelector(".inner-radius-ratio").value
     );
-    const roundingRadius = parseFloat(
-      document.querySelector(".rounding-radius").value
-    );
     randomness =
       randomness !== null
         ? randomness
@@ -274,50 +294,97 @@ export const StarTool = {
       symmetrical !== null
         ? symmetrical
         : document.querySelector(".symmetrical").checked;
-
+    const drawOuterLines = document.querySelector(".draw-outer-lines").checked;
+    const drawInnerLines = document.querySelector(".draw-inner-lines").checked;
+  
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
         : lineType === LineType.DASHED
         ? [5, 5]
         : null;
-
+  
     const center = { x: this.selectedStar.left, y: this.selectedStar.top };
-
-    // Use the original radius instead of recalculating from the current width
     const radius = this.selectedStar.radius || this.selectedStar.width / 2;
-
-    console.log("updateStar - Inner radius ratio:", innerRadiusRatio);
-    console.log("updateStar - Outer radius:", radius);
-    console.log(
-      "updateStar - Calculated inner radius:",
-      radius * innerRadiusRatio
-    );
-
+  
     this.canvas.remove(this.selectedStar);
     this.selectedStar = this.drawStar(
       center,
       radius,
       points,
       innerRadiusRatio,
-      roundingRadius,
       randomness,
-      symmetrical
+      symmetrical,
+      drawOuterLines,
+      drawInnerLines
     );
     this.selectedStar.set({
       stroke: DEFAULT_LINE_TYPE,
       strokeWidth: lineWidth,
       strokeDashArray: strokeDashArray,
       fill: "transparent",
-      radius: radius, // Store the original radius
+      radius: radius,
     });
     this.canvas.add(this.selectedStar);
-
-    console.log("updateStar - Final star width:", this.selectedStar.width);
-    console.log("updateStar - Final star height:", this.selectedStar.height);
-
     this.canvas.renderAll();
   },
+  // updateStar: function (
+  //   randomness = null,
+  //   symmetrical = null
+  // ) {
+  //   if (!this.selectedStar || !this.canvas) return;
+  //   const lineWidth =
+  //     parseInt(document.querySelector(".line-width").value) ||
+  //     DEFAULT_LINE_WIDTH;
+  //   const lineType = document.querySelector(".line-type").value;
+  //   const points =
+  //     parseInt(document.querySelector(".points").value) ||
+  //     DEFAULT_NUMBER_OF_POINTS;
+  //   const innerRadiusRatio = parseFloat(
+  //     document.querySelector(".inner-radius-ratio").value
+  //   );
+  //   randomness =
+  //     randomness !== null
+  //       ? randomness
+  //       : parseFloat(document.querySelector(".randomness").value);
+  //   symmetrical =
+  //     symmetrical !== null
+  //       ? symmetrical
+  //       : document.querySelector(".symmetrical").checked;
+  //   const drawOuterLines = document.querySelector(".draw-outer-lines").checked;
+  //   const drawInnerLines = document.querySelector(".draw-inner-lines").checked;
+
+  //   const strokeDashArray =
+  //     lineType === LineType.DOTTED
+  //       ? [1, 1]
+  //       : lineType === LineType.DASHED
+  //       ? [5, 5]
+  //       : null;
+
+  //   const center = { x: this.selectedStar.left, y: this.selectedStar.top };
+  //   const radius = this.selectedStar.radius || this.selectedStar.width / 2;
+
+  //   this.canvas.remove(this.selectedStar);
+  //   this.selectedStar = this.drawStar(
+  //     center,
+  //     radius,
+  //     points,
+  //     innerRadiusRatio,
+  //     randomness,
+  //     symmetrical,
+  //     drawOuterLines,
+  //     drawInnerLines
+  //   );
+  //   this.selectedStar.set({
+  //     stroke: DEFAULT_LINE_TYPE,
+  //     strokeWidth: lineWidth,
+  //     strokeDashArray: strokeDashArray,
+  //     fill: "transparent",
+  //     radius: radius, 
+  //   });
+  //   this.canvas.add(this.selectedStar);
+  //   this.canvas.renderAll();
+  // },
 
   finishEditing: function () {
     this.canvas.renderAll();
@@ -328,55 +395,60 @@ export const StarTool = {
     radius,
     points,
     innerRadiusRatio,
-    roundingRadius,
     randomness,
-    symmetrical
+    symmetrical,
+    drawOuterLines,
+    drawInnerLines
   ) {
     const innerRadius = radius * innerRadiusRatio;
-
-    console.log("drawStar - radius:", radius);
-    console.log("drawStar - innerRadiusRatio:", innerRadiusRatio);
-    console.log("drawStar - calculated innerRadius:", innerRadius);
-
     const angleStep = (Math.PI * 2) / points;
     const starPoints = [];
-
+    const outerPoints = [];
+    const innerPoints = [];
+  
+    // Generate random offsets for symmetrical randomness
+    const randomOffsets = [];
+    for (let i = 0; i < points; i++) {
+      randomOffsets.push({
+        r: (Math.random() - 0.5) * 2 * randomness * radius,
+        a: (Math.random() - 0.5) * 2 * randomness * angleStep
+      });
+    }
+  
     for (let i = 0; i < points * 2; i++) {
       const angle = (i * angleStep) / 2;
       const currentRadius = i % 2 === 0 ? radius : innerRadius;
-
+  
       let r = currentRadius;
       let a = angle;
-
+  
       if (randomness > 0) {
-        const randR = (Math.random() - 0.5) * 2 * randomness * radius;
-        const randA = (Math.random() - 0.5) * 2 * randomness * angleStep;
-        r += symmetrical ? randR : randR * (i % 2 === 0 ? 1 : innerRadiusRatio);
-        a += symmetrical ? randA : randA * (i % 2 === 0 ? 1 : 2);
+        const randomIndex = Math.floor(i / 2);
+        const randR = randomOffsets[randomIndex].r;
+        const randA = randomOffsets[randomIndex].a;
+  
+        if (symmetrical) {
+          r += randR * (i % 2 === 0 ? 1 : innerRadiusRatio);
+          a += randA;
+        } else {
+          r += (Math.random() - 0.5) * 2 * randomness * radius * (i % 2 === 0 ? 1 : innerRadiusRatio);
+          a += (Math.random() - 0.5) * 2 * randomness * angleStep * (i % 2 === 0 ? 1 : 2);
+        }
       }
-
+  
       let x = r * Math.cos(a);
       let y = r * Math.sin(a);
-
-      if (roundingRadius > 0) {
-        const nextAngle = (((i + 1) % (points * 2)) * angleStep) / 2;
-        const nextRadius = (i + 1) % 2 === 0 ? radius : innerRadius;
-        const nextX = nextRadius * Math.cos(nextAngle);
-        const nextY = nextRadius * Math.sin(nextAngle);
-
-        const controlRadius =
-          roundingRadius * (i % 2 === 0 ? radius : innerRadius);
-        const controlAngle = angle + (nextAngle - angle) / 2;
-        const controlX = x + controlRadius * Math.cos(controlAngle);
-        const controlY = y + controlRadius * Math.sin(controlAngle);
-
-        starPoints.push("Q", controlX, controlY, nextX, nextY);
+  
+      starPoints.push(x, y);
+  
+      if (i % 2 === 0) {
+        outerPoints.push({ x, y });
       } else {
-        starPoints.push(x, y);
+        innerPoints.push({ x, y });
       }
     }
-
-    return new fabric.Path(`M ${starPoints.join(" ")} Z`, {
+  
+    const starPath = new fabric.Path(`M ${starPoints.join(" ")} Z`, {
       __uid: this.starCounter++,
       left: center.x,
       top: center.y,
@@ -388,11 +460,164 @@ export const StarTool = {
       selectable: false,
       evented: false,
       objectCaching: false,
+    });
+  
+    const lines = [];
+  
+    if (drawOuterLines) {
+      outerPoints.forEach((point) => {
+        lines.push(
+          new fabric.Line(
+            [center.x, center.y, center.x + point.x, center.y + point.y],
+            {
+              stroke: DEFAULT_LINE_TYPE,
+              strokeWidth: DEFAULT_LINE_WIDTH,
+              selectable: false,
+              evented: false,
+            }
+          )
+        );
+      });
+    }
+  
+    if (drawInnerLines) {
+      innerPoints.forEach((point) => {
+        lines.push(
+          new fabric.Line(
+            [center.x, center.y, center.x + point.x, center.y + point.y],
+            {
+              stroke: DEFAULT_LINE_TYPE,
+              strokeWidth: DEFAULT_LINE_WIDTH,
+              selectable: false,
+              evented: false,
+            }
+          )
+        );
+      });
+    }
+  
+    const group = new fabric.Group([starPath, ...lines], {
+      left: center.x,
+      top: center.y,
+      originX: "center",
+      originY: "center",
+      selectable: false,
+      evented: false,
       points: points,
       innerRadiusRatio: innerRadiusRatio,
-      roundingRadius: roundingRadius,
       randomness: randomness,
       symmetrical: symmetrical,
+      drawOuterLines: drawOuterLines,
+      drawInnerLines: drawInnerLines,
     });
+  
+    return group;
   },
+  // drawStar: function (
+  //   center,
+  //   radius,
+  //   points,
+  //   innerRadiusRatio,
+  //   randomness,
+  //   symmetrical,
+  //   drawInnerLines,
+  //   drawOuterLines
+  // ) {
+  //   const innerRadius = radius * innerRadiusRatio;
+  //   const angleStep = (Math.PI * 2) / points;
+  //   const starPoints = [];
+  //   const outerPoints = [];
+  //   const innerPoints = [];
+
+  //   for (let i = 0; i < points * 2; i++) {
+  //     const angle = (i * angleStep) / 2;
+  //     const currentRadius = i % 2 === 0 ? radius : innerRadius;
+
+  //     let r = currentRadius;
+  //     let a = angle;
+
+  //     if (randomness > 0) {
+  //       const randR = (Math.random() - 0.5) * 2 * randomness * radius;
+  //       const randA = (Math.random() - 0.5) * 2 * randomness * angleStep;
+  //       r += symmetrical ? randR : randR * (i % 2 === 0 ? 1 : innerRadiusRatio);
+  //       a += symmetrical ? randA : randA * (i % 2 === 0 ? 1 : 2);
+  //     }
+
+  //     let x = r * Math.cos(a);
+  //     let y = r * Math.sin(a);
+
+  //     starPoints.push(x, y);
+
+  //     if (i % 2 === 0) {
+  //       outerPoints.push({ x, y });
+  //     } else {
+  //       innerPoints.push({ x, y });
+  //     }
+  //   }
+
+  //   const starPath = new fabric.Path(`M ${starPoints.join(" ")} Z`, {
+  //     __uid: this.starCounter++,
+  //     left: center.x,
+  //     top: center.y,
+  //     originX: "center",
+  //     originY: "center",
+  //     stroke: DEFAULT_LINE_TYPE,
+  //     strokeWidth: DEFAULT_LINE_WIDTH,
+  //     fill: "transparent",
+  //     selectable: false,
+  //     evented: false,
+  //     objectCaching: false,
+  //   });
+
+  //   const lines = [];
+
+  //   if (drawOuterLines) {
+  //     outerPoints.forEach((point) => {
+  //       lines.push(
+  //         new fabric.Line(
+  //           [center.x, center.y, center.x + point.x, center.y + point.y],
+  //           {
+  //             stroke: DEFAULT_LINE_TYPE,
+  //             strokeWidth: DEFAULT_LINE_WIDTH,
+  //             selectable: false,
+  //             evented: false,
+  //           }
+  //         )
+  //       );
+  //     });
+  //   }
+
+  //   if (drawInnerLines) {
+  //     innerPoints.forEach((point) => {
+  //       lines.push(
+  //         new fabric.Line(
+  //           [center.x, center.y, center.x + point.x, center.y + point.y],
+  //           {
+  //             stroke: DEFAULT_LINE_TYPE,
+  //             strokeWidth: DEFAULT_LINE_WIDTH,
+  //             selectable: false,
+  //             evented: false,
+  //           }
+  //         )
+  //       );
+  //     });
+  //   }
+
+  //   const group = new fabric.Group([starPath, ...lines], {
+  //     left: center.x,
+  //     top: center.y,
+  //     originX: "center",
+  //     originY: "center",
+  //     selectable: false,
+  //     evented: false,
+  //     points: points,
+  //     innerRadiusRatio: innerRadiusRatio,
+  //     randomness: randomness,
+  //     symmetrical: symmetrical,
+  //     drawOuterLines: drawOuterLines,
+  //     drawInnerLines: drawInnerLines,
+  //   });
+
+  //   return group;
+  // },
 };
