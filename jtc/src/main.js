@@ -2,6 +2,7 @@ import "./styles.css";
 import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { PolygonTool } from "./tools/shapes/Polygon";
+import { StarTool } from "./tools/shapes/Star";
 import { StraightLineTool } from "./tools/shapes/StraightLine";
 import { SpokesTool } from "./tools/shapes/Spokes";
 import { SquareTool } from "./tools/shapes/Square";
@@ -26,6 +27,7 @@ import { CanvasManager } from "./CanvasManager";
     // Register drawing tools
     canvasManager.registerDrawingTool(CircleTool);
     canvasManager.registerDrawingTool(PolygonTool);
+    canvasManager.registerDrawingTool(StarTool);
     canvasManager.registerDrawingTool(StraightLineTool);
     canvasManager.registerDrawingTool(TriangleTool);
     canvasManager.registerDrawingTool(CurvedLineTool);
@@ -46,6 +48,7 @@ import { CanvasManager } from "./CanvasManager";
     // Add listeners for the drawing tools
     const drawingTools = [
       CircleTool,
+      StarTool,
       StraightLineTool,
       CurvedLineTool,
       PolygonTool,

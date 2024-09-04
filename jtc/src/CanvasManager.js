@@ -200,3 +200,4 @@ export class CanvasManager {
     }
   }
 }
+//TODO can I add an on:finish-btn event listener to add decorations to the undo/redo stack
