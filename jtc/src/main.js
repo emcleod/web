@@ -1,6 +1,7 @@
 import "./styles.css";
 import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
+import { FollowPointerTool } from "./tools/shapes/FollowPointer";
 import { PolygonTool } from "./tools/shapes/Polygon";
 import { StarTool } from "./tools/shapes/Star";
 import { StraightLineTool } from "./tools/shapes/StraightLine";
@@ -24,20 +25,35 @@ import { CanvasManager } from "./CanvasManager";
     );
     canvasManager.setupCanvas();
 
+    const drawingTools = [
+      CircleTool,
+      CurvedLineTool,
+      FollowPointerTool,
+      PolygonTool,
+      SpokesTool,
+      SquareTool,
+      StarTool,
+      StraightLineTool,
+      TriangleTool,
+    ];
+    const editingTools = [
+      SelectionTool
+    ]
     // Register drawing tools
-    canvasManager.registerDrawingTool(CircleTool);
-    canvasManager.registerDrawingTool(PolygonTool);
-    canvasManager.registerDrawingTool(StarTool);
-    canvasManager.registerDrawingTool(StraightLineTool);
-    canvasManager.registerDrawingTool(TriangleTool);
-    canvasManager.registerDrawingTool(CurvedLineTool);
-    canvasManager.registerDrawingTool(SquareTool);
-    canvasManager.registerDrawingTool(SpokesTool);
+    drawingTools.forEach((tool) => canvasManager.registerDrawingTool(tool));
+    // canvasManager.registerDrawingTool(CircleTool);
+    // canvasManager.registerDrawingTool(CurvedLineTool);
+    // canvasManager.registerDrawingTool(PolygonTool);
+    // canvasManager.registerDrawingTool(SpokesTool);
+    // canvasManager.registerDrawingTool(SquareTool);
+    // canvasManager.registerDrawingTool(StarTool);
+    // canvasManager.registerDrawingTool(StraightLineTool);
+    // canvasManager.registerDrawingTool(TriangleTool);
     // Register editing tools
-    canvasManager.registerEditingTool(SelectionTool);
+    editingTools.forEach((tool) => canvasManager.registerEditingTool(tool));
+//    canvasManager.registerEditingTool(SelectionTool);
 
     // Add listeners for the editing tools
-    const editingTools = [SelectionTool];
     editingTools.forEach((tool) => {
       document.getElementById(tool.buttonId).addEventListener("click", () => {
         canvasManager.activateTool(tool.name).catch((error) => {
@@ -46,16 +62,6 @@ import { CanvasManager } from "./CanvasManager";
       });
     });
     // Add listeners for the drawing tools
-    const drawingTools = [
-      CircleTool,
-      StarTool,
-      StraightLineTool,
-      CurvedLineTool,
-      PolygonTool,
-      SpokesTool,
-      SquareTool,
-      TriangleTool,
-    ];
     drawingTools.forEach((tool) => {
       document.getElementById(tool.buttonId).addEventListener("click", () => {
         canvasManager
