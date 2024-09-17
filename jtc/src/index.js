@@ -12,7 +12,6 @@ import { SelectionTool } from "./tools/Selection";
 import { CanvasManager } from "./canvas/CanvasManager";
 
 (function () {
-
   document.addEventListener("DOMContentLoaded", () => {
     const canvasContainer = document.getElementById("canvas-container");
     const containerWidth = canvasContainer.offsetWidth;
@@ -35,9 +34,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       StraightLineTool,
       TriangleTool,
     ];
-    const editingTools = [
-      SelectionTool
-    ]
+    const editingTools = [SelectionTool];
     // Register drawing tools
     drawingTools.forEach((tool) => canvasManager.registerDrawingTool(tool));
     // Register editing tools
@@ -61,10 +58,12 @@ import { CanvasManager } from "./canvas/CanvasManager";
           canvasManager
             .activateTool(tool.name)
             .then(() => {
-              if (typeof tool.editingTool === 'function') {
+              if (typeof tool.editingTool === "function") {
                 tool.editingTool();
               } else {
-                console.warn(`Tool ${tool.name} does not have an editingTool method`);
+                console.warn(
+                  `Tool ${tool.name} does not have an editingTool method`
+                );
               }
             })
             .catch((error) => {
@@ -72,7 +71,9 @@ import { CanvasManager } from "./canvas/CanvasManager";
             });
         });
       } else {
-        console.error(`Button not found for tool: ${tool.name} (buttonId: ${tool.buttonId})`);
+        console.error(
+          `Button not found for tool: ${tool.name} (buttonId: ${tool.buttonId})`
+        );
       }
     });
 
@@ -114,5 +115,6 @@ import { CanvasManager } from "./canvas/CanvasManager";
       // that might not trigger a mouse:up event
       canvasManager.saveState();
     });
+
   });
 })();

@@ -1,12 +1,13 @@
-import { removeToolOptions } from './ToolUtils';
-import { CanvasInteractions } from '../../canvas/CanvasInteractions';
+import { fadeIn, fadeOut, removeToolOptions, DEFAULT_LINE_WIDTH, DEFAULT_SEGMENTS } from './ToolUtils';
+import { canvasInteractions } from '../../canvas/CanvasInteractions';
+import { OptionsFactory } from './web/OptionsContainer';
 import { fabric } from "fabric";
 
 export const createBaseTool = (toolImplementation) => {
   const baseTool = {
     ...toolImplementation,
 
-    ...CanvasInteractions,
+    ...canvasInteractions,
 
     activate: function(canvas) {
       this.canvas = canvas;
@@ -88,7 +89,60 @@ export const createBaseTool = (toolImplementation) => {
         evented: options.evented !== undefined ? options.evented : false,
         ...options
       });
-    }
+    },
+
+    editingTool: function(canvas, object = null) {
+      if (object) {
+        this.selectedObject = object;
+      }
+      if (!this.selectedObject) return;
+
+      const container = document.getElementById('options-container');
+      const currentValues = this.currentValues();
+      const type = this.isShapeTool ? 'shapeType' : 'lineType';
+      const className = `${this.name}-options`;
+
+      removeToolOptions();
+      console.log(className);
+      const optionsHTML = OptionsFactory.getHTML(type, className, currentValues);
+      container.innerHTML = optionsHTML;
+
+      const toolOptions = container.querySelector(`.${className}`);
+      fadeIn(toolOptions);
+
+      OptionsFactory.setupListeners(
+        toolOptions,
+        () => this.updateObject(canvas),
+        () => this.finishEditing(container)
+      );
+
+      // Apply CSS
+      if (!document.querySelector('#tool-options-style')) {
+        const style = document.createElement('style');
+        style.id = 'tool-options-style';
+        style.textContent = OptionsFactory.getCSS();
+        document.head.appendChild(style);
+      }
+    },
+
+    updateObject: function(canvas) {
+      if (this.selectedObject) {
+        const className = `${this.name}-options`;
+        const toolOptions = document.querySelector(`.${className}`);
+        const lineWidth = parseInt(toolOptions.querySelector('.line-width').value) || DEFAULT_LINE_WIDTH;
+        const lineType = toolOptions.querySelector('.line-type').value;
+        const segments = parseInt(toolOptions.querySelector('.segments')?.value) || DEFAULT_SEGMENTS;
+
+        this.decorate(canvas, this.selectedObject, lineWidth, lineType, segments);
+      }
+    },
+
+    finishEditing: function(container) {
+      fadeOut(container, () => {
+        removeToolOptions();
+      });
+    },
+
   };
 
   // Ensure that methods added by baseTool maintain the correct 'this' context

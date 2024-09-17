@@ -26,6 +26,7 @@ export const fadeOut = (element, duration = 300) => {
     element.style.opacity = 0;
     element.style.transform = "translateY(-20px)";
   }, 10);
+  removeToolOptions();
 };
 
 export const removeToolOptions = () => {

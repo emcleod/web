@@ -1,6 +1,6 @@
 import { fabric } from "fabric";
 
-export const CanvasInteractions = {
+export const canvasInteractions = {
 
   renderAll: function(canvas) {
     canvas.renderAll();
