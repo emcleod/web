@@ -36,7 +36,7 @@ export const SelectionTool = {
               CircleTool.selectedCircle = null;
             }
             CircleTool.selectedCircle = selectedObject;
-            CircleTool.editingTool(selectedObject);
+            CircleTool.editingTool(canvas, selectedObject);
           }
         } else if (selectedObject.type === 'rect') {
           if (SquareTool.selectedSquare !== selectedObject) {
@@ -44,7 +44,7 @@ export const SelectionTool = {
               SquareTool.selectedSquare = null;
             }
             SquareTool.selectedSquare = selectedObject;
-            SquareTool.editingTool(selectedObject);
+            SquareTool.editingTool(canvas, selectedObject);
           }
         } else if (selectedObject.type === 'group') {
             if (selectedObject._objects[0].type === 'circle') {

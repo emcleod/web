@@ -8,80 +8,66 @@ import {
   DEFAULT_SEGMENTS,
 } from "./ToolUtils";
 
+let _squareCounter = 0;
+let _groupCounter = 0;
+
 const squareImplementation = {
-  squareCounter: 0,
-  groupCounter: 0,
   name: "square",
   buttonId: "square-btn",
   selectedSquare: null,
-  activate: function (canvas) {
-    this.canvas = canvas;
-    canvas.defaultCursor = "crosshair";
-    let isDrawing = false;
-    let square;
-    let centerPoint;
+  square: null,
+  startPoint: null,
 
-    const startDrawing = (o) => {
-      isDrawing = true;
-      centerPoint = canvas.getPointer(o.e);
-      square = new fabric.Rect({
-        __uid: this.squareCounter++,
-        left: centerPoint.x,
-        top: centerPoint.y,
-        originX: "center",
-        originY: "center",
-        width: 0,
-        height: 0,
-        stroke: DEFAULT_LINE_TYPE,
-        strokeWidth: DEFAULT_LINE_WIDTH,
-        fill: "transparent",
-        selectable: false,
-        evented: false,
-        objectCaching: false,
-      });
-      canvas.add(square);
-      this.selectedSquare = square;
-    };
-
-    const keepDrawing = (o) => {
-      if (!isDrawing) return;
-      const pointer = canvas.getPointer(o.e);
-      const dx = pointer.x - centerPoint.x;
-      const dy = pointer.y - centerPoint.y;
-      const side = Math.max(Math.abs(dx), Math.abs(dy)) * 2;
-      square.set({
-        width: side,
-        height: side,
-      });
-      canvas.renderAll();
-    };
-
-    const finishDrawing = (o) => {
-      if (!isDrawing) return;
-      isDrawing = false;
-      square.objectCaching = true;
-      square.setCoords();
-      this.selectedSquare = square;
-      this.editingTool();
-      canvas.renderAll();
-    };
-
-    canvas.on("mouse:down", startDrawing);
-    canvas.on("mouse:move", keepDrawing);
-    canvas.on("mouse:up", finishDrawing);
-
-    this.cleanupFunctions = [
-      () => canvas.off("mouse:down", startDrawing),
-      () => canvas.off("mouse:move", keepDrawing),
-      () => canvas.off("mouse:up", finishDrawing),
-    ];
+  onStartDrawing: function(canvas, o) {
+    this.startPoint = canvas.getPointer(o.e);
+    this.square = new fabric.Rect({
+      _uid: _squareCounter++,
+      left: this.startPoint.x,
+      top: this.startPoint.y,
+      originX: "center",
+      originY: "center",
+      width: 0,
+      height: 0,
+      stroke: DEFAULT_LINE_TYPE,
+      strokeWidth: DEFAULT_LINE_WIDTH,
+      fill: "transparent",
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+    });
+    canvas.add(this.square);
+    this.selectedSquare = this.square;
   },
 
-  deactivate: function (canvas) {
+  onKeepDrawing: function(canvas, o) {
+    if (!this.square || !this.startPoint) return;
+    const pointer = canvas.getPointer(o.e);
+    const dx = pointer.x - this.startPoint.x;
+    const dy = pointer.y - this.startPoint.y;
+    const side = Math.max(Math.abs(dx), Math.abs(dy)) * 2;
+    this.square.set({width: side, height: side });
+    canvas.renderAll();
+  },
+
+  onFinishDrawing: function(canvas, o) {
+    this.square.objectCaching = true;
+    this.square.setCoords();
+    this.selectedSquare = this.square;
+    this.editingTool(canvas);
+    this.square = null;
+    this.startPoint = null;
+  },
+
+  onActivate: function (canvas) {
+  },
+
+  onDeactivate: function (canvas) {
     this.selectedSquare = null;
+    this.square = null;
+    this.startPoint = null;
   },
 
-  editingTool: function (square = null) {
+  editingTool: function(canvas, square = null) {
     if (square) {
       this.selectedSquare = square;
     }
@@ -166,25 +152,26 @@ const squareImplementation = {
           parseInt(squareOptions.querySelector(".segments").value) ||
           DEFAULT_SEGMENTS;
         if (this.selectedSquare) {
-          this.decorate(this.selectedSquare, lineWidth, lineType, segments);
+          this.decorate(canvas, this.selectedSquare, lineWidth, lineType, segments);
         }
       }
     });
   },
 
   decorate(
+    canvas,
     square,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
     segments = DEFAULT_SEGMENTS
   ) {
-    if (!square || !this.canvas) return;
+    if (!square || !canvas) return;
     // Remove existing group if it exists
-    const existingGroup = this.canvas
+    const existingGroup = canvas
       .getObjects()
-      .find((obj) => obj.__square_uid === square.__uid && obj.type === "group");
+      .find((obj) => obj._square_uid === square._uid && obj.type === "group");
     if (existingGroup) {
-      this.canvas.remove(existingGroup);
+      canvas.remove(existingGroup);
     }
     const strokeDashArray =
       lineType === LineType.DOTTED
@@ -206,16 +193,16 @@ const squareImplementation = {
     const combinedGroup = this._createGroup(square, groupObjects);
     // Remove the original square from the canvas if it's not part of a group
     if (!existingGroup) {
-      this.canvas.remove(square);
+      canvas.remove(square);
     }
     // Add the combined group to the canvas
-    this.canvas.add(combinedGroup);
-    this.canvas.renderAll();
+    canvas.add(combinedGroup);
+    canvas.renderAll();
   },
 
   _createSquare(square, strokeWidth, strokeDashArray) {
     return new fabric.Rect({
-      __uid: this.squareCounter++,
+      _uid: _squareCounter++,
       width: square.width,
       height: square.height,
       stroke: square.stroke,
@@ -250,7 +237,7 @@ const squareImplementation = {
         x2 = x1 + (y2 - y1) / Math.tan(angle);
       }
       return new fabric.Line([x1, y1, x2, y2], {
-        __square_uid: square.__uid,
+        _square_uid: square._uid,
         stroke: square.stroke,
         strokeWidth: strokeWidth,
         strokeDashArray: strokeDashArray,
@@ -264,8 +251,8 @@ const squareImplementation = {
 
   _createGroup(square, groupObjects) {
     return new fabric.Group(groupObjects, {
-      __group_uid: this.groupCounter++,
-      __square_uid: square.__uid,
+      _group_uid: this.groupCounter++,
+      _square_uid: square._uid,
       left: square.left,
       top: square.top,
       originX: "center",

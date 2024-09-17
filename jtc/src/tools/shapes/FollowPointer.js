@@ -10,74 +10,56 @@ import { createBaseTool } from "./BaseTool";
 const DEFAULT_SMOOTHING = 0;
 const MAX_SMOOTHING = 1;
 
+let _lineCounter = 0;
+
 const followPointerImplementation = {
   lineCounter: 0,
   name: "follow-pointer",
   buttonId: "follow-pointer-btn",
   selectedLine: null,
+  line: null,
+  points: null,
 
-  activate: function (canvas) {
-    this.canvas = canvas;
-    canvas.defaultCursor = "crosshair";
-    let isDrawing = false; 
-    let line;
-    let points = [];
+  onStartDrawing: function(canvas, o) {
+    const pointer = canvas.getPointer(o.e);
+    this.points = [pointer.x, pointer.y];
+    this.line = this._createLine(this.points);
+    canvas.add(this.line);
+    this.selectedLine = this.line;
+  },
 
-    const startDrawing = (o) => {
-      isDrawing = true;
-      const pointer = canvas.getPointer(o.e);
-      points = [pointer.x, pointer.y];
-      line = this.createLine(points);
-      canvas.add(line);
-    };
-
-    const keepDrawing = (o) => {
-      if (!isDrawing) return;
-      const pointer = canvas.getPointer(o.e);
-      points.push(pointer.x, pointer.y);
-      line.path = [
-        ["M", points[0], points[1]],
-        ...points
-          .slice(2)
-          .map((_, i) =>
-            i % 2 === 0 ? ["L", points[i + 2], points[i + 3]] : null
-          )
-          .filter(Boolean),
-      ];
-      canvas.renderAll();
-    };
-
-    const finishDrawing = (o) => {
-      if (!isDrawing) return;
-      isDrawing = false;
-      this.selectedLine = line;
-      this.selectedLine.originalPoints = [...points];
-      this.editingTool();
-      canvas.renderAll();
-    };
-
-    canvas.on("mouse:down", startDrawing);
-    canvas.on("mouse:move", keepDrawing);
-    canvas.on("mouse:up", finishDrawing);
-
-    this.cleanupFunctions = [
-      () => canvas.off("mouse:down", startDrawing),
-      () => canvas.off("mouse:move", keepDrawing),
-      () => canvas.off("mouse:up", finishDrawing),
+  onKeepDrawing: function(canvas, o) {
+    if (!this.line) return; 
+    const pointer = canvas.getPointer(o.e);
+    this.points.push(pointer.x, pointer.y);
+    this.line.path = [
+      ["M", this.points[0], this.points[1]],
+      ...this.points
+        .slice(2)
+        .map((_, i) =>
+          i % 2 === 0 ? ["L", this.points[i + 2], this.points[i + 3]] : null
+        )
+        .filter(Boolean),
     ];
+    canvas.renderAll();
   },
 
-  deactivate: function (canvas) {
-    canvas.defaultCursor = "default";
-    if (this.cleanupFunctions) {
-      this.cleanupFunctions.forEach((fn) => fn());
-      this.cleanupFunctions = [];
-    }
-    removeToolOptions();
+  onFinishDrawing: function(canvas, o) {
+    this.selectedLine = this.line;
+    this.selectedLine.originalPoints = [...this.points];
+    this.editingTool(canvas);
+    this.line = null;
+  },
+
+  onActivate: function (canvas) {
+  },
+
+  onDeactivate: function (canvas) {
     this.selectedLine = null;
+    this.line = null;
   },
 
-  editingTool: function (line = null) {
+  editingTool: function(canvas, line = null) {
     if (line) {
       this.selectedLine = line;
     }
@@ -119,21 +101,21 @@ const followPointerImplementation = {
           event.target.classList.contains(cls)
         )
       ) {
-        this.updateLine();
+        this.updateLine(canvas);
       }
     });
 
     lineOptions.addEventListener("click", (event) => {
       if (event.target.classList.contains("reset-original")) {
-        this.resetToOriginal();
+        this._resetToOriginal(canvas);
       } else if (event.target.dataset.action === "finish") {
-        this.finishEditing();
+        this._finishEditing(canvas);
       }
     });
   },
 
-  updateLine: function () {
-    if (!this.selectedLine || !this.canvas) return;
+  updateLine: function (canvas) {
+    if (!this.selectedLine || !canvas) return;
     const lineWidth = parseInt(document.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
     const lineType = document.querySelector(".line-type").value;
     const smoothing = parseFloat(document.querySelector(".smoothing").value);
@@ -151,9 +133,9 @@ const followPointerImplementation = {
     }
   
     const originalPoints = this.selectedLine.originalPoints;
-    const smoothedPoints = this.smoothLine(originalPoints, smoothing);
+    const smoothedPoints = this._smoothLine(originalPoints, smoothing);
   
-    const newPath = this.pointsToPath(smoothedPoints);
+    const newPath = this._pointsToPath(smoothedPoints);
   
     this.selectedLine.set({
       path: newPath,
@@ -162,16 +144,16 @@ const followPointerImplementation = {
       smoothing: smoothing,
     });
   
-    this.canvas.renderAll();
+    canvas.renderAll();
   },
 
-  finishEditing: function () {
-    this.canvas.renderAll();
+  _finishEditing: function (canvas) {
+    canvas.renderAll();
   },
 
-  createLine: function (points, properties = {}) {
+  _createLine: function (points, properties = {}) {
     const line = new fabric.Path(`M ${points.join(" ")}`, {
-      __uid: this.lineCounter++,
+      _uid: _lineCounter++,
       stroke: DEFAULT_LINE_TYPE,
       strokeWidth: DEFAULT_LINE_WIDTH,
       fill: "",
@@ -184,7 +166,7 @@ const followPointerImplementation = {
     return line;
   },
 
-  smoothLine: function (points, smoothing) {
+  _smoothLine: function (points, smoothing) {
     const windowSize = Math.max(3, Math.round(20 * smoothing)); // Adjust window size based on smoothing
     const polynomialOrder = Math.min(4, Math.max(2, Math.floor(smoothing * 5)));
 
@@ -204,7 +186,7 @@ const followPointerImplementation = {
       const Xt = X[0].map((_, i) => X.map(row => row[i])); // Transpose of X
       const XtX = Xt.map(row => X[0].map((_, j) => row.reduce((sum, a, k) => sum + a * X[k][j], 0)));
       const XtY = Xt.map(row => row.reduce((sum, a, k) => sum + a * Y[k][0], 0));
-      const coeffs = this.gaussianElimination(XtX, XtY);
+      const coeffs = this._gaussianElimination(XtX, XtY);
       return coeffs[0]; // Return only the constant term (smoothed value)
     };  
     for (let i = 1; i < xCoords.length - 1; i++) {
@@ -216,7 +198,7 @@ const followPointerImplementation = {
     return smoothedPoints;
   },
   
-  gaussianElimination: function (A, b) {
+  _gaussianElimination: function (A, b) {
     const n = A.length;
     for (let i = 0; i < n; i++) {
       let maxRow = i;
@@ -247,7 +229,7 @@ const followPointerImplementation = {
     return x;
   },
 
-  pointsToPath: function (points) {
+  _pointsToPath: function (points) {
     return [
       ["M", points[0], points[1]],
       ...points.slice(2).reduce((acc, point, index) => {
@@ -259,7 +241,7 @@ const followPointerImplementation = {
     ];
   },
 
-  resetToOriginal: function () {
+  _resetToOriginal: function (canvas) {
     if (this.selectedLine && this.selectedLine.originalPoints) {
       const currentLineType = document.querySelector(".line-type").value;
       let strokeDashArray;
@@ -275,13 +257,13 @@ const followPointerImplementation = {
       }
 
       this.selectedLine.set({
-        path: this.pointsToPath(this.selectedLine.originalPoints),
+        path: this._pointsToPath(this.selectedLine.originalPoints),
         strokeWidth: this.selectedLine.strokeWidth,
         strokeDashArray: strokeDashArray,
         smoothing: 0,
       });
 
-      this.canvas.renderAll();
+      canvas.renderAll();
       document.querySelector(".smoothing").value = 0;
     }
   },

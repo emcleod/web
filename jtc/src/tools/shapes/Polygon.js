@@ -9,88 +9,56 @@ import {
 import { createBaseTool } from "./BaseTool";
 const DEFAULT_NUMBER_OF_SIDES = 8;
 
+let _polygonCounter = 0;
+let _groupCounter = 0;
+
 const polygonImplementation = {
-  polygonCounter: 0,
-  groupCounter: 0,
   name: "polygon",
   buttonId: "polygon-btn",
   selectedPolygon: null,
-  activate: function (canvas) {
-    this.canvas = canvas;
-    canvas.defaultCursor = "crosshair";
-    let isDrawing = false;
-    let polygon;
-    let startPoint;
+  polygon: null,
+  startPoint: null,
 
-    const drawPolygon = (center, radius, sides) => {
-      const points = [];
-      for (let i = 0; i < DEFAULT_NUMBER_OF_SIDES; i++) {
-        const angle = (i / DEFAULT_NUMBER_OF_SIDES) * 2 * Math.PI;
-        const x = center.x + radius * Math.cos(angle);
-        const y = center.y + radius * Math.sin(angle);
-        points.push({ x, y });
-      }
-      return new fabric.Polygon(points, {
-        __uid: this.polygonCounter++,
-        left: center.x,
-        top: center.y,
-        originX: "center",
-        originY: "center",
-        stroke: DEFAULT_LINE_TYPE,
-        strokeWidth: DEFAULT_LINE_WIDTH,
-        fill: "transparent",
-        selectable: false,
-        evented: false,
-        objectCaching: false,
-        sides: DEFAULT_NUMBER_OF_SIDES,
-      });
-    };
-
-    const startDrawing = (o) => {
-      isDrawing = true;
-      startPoint = canvas.getPointer(o.e);
-      polygon = drawPolygon(startPoint, 0, DEFAULT_NUMBER_OF_SIDES);
-      canvas.add(polygon);
-    };
-
-    const keepDrawing = (o) => {
-      if (!isDrawing) return;
-      const pointer = canvas.getPointer(o.e);
-      const radius = Math.sqrt(
-        Math.pow(pointer.x - startPoint.x, 2) +
-          Math.pow(pointer.y - startPoint.y, 2)
-      );
-      canvas.remove(polygon);
-      polygon = drawPolygon(startPoint, radius, DEFAULT_NUMBER_OF_SIDES);
-      canvas.add(polygon);
-    };
-
-    const finishDrawing = (o) => {
-      if (!isDrawing) return;
-      isDrawing = false;
-      polygon.objectCaching = true;
-      polygon.setCoords();
-      this.selectedPolygon = polygon;
-      this.editingTool();
-      canvas.renderAll();
-    };
-
-    canvas.on("mouse:down", startDrawing);
-    canvas.on("mouse:move", keepDrawing);
-    canvas.on("mouse:up", finishDrawing);
-
-    this.cleanupFunctions = [
-      () => canvas.off("mouse:down", startDrawing),
-      () => canvas.off("mouse:move", keepDrawing),
-      () => canvas.off("mouse:up", finishDrawing),
-    ];
+  onStartDrawing: function(canvas, o) {
+    this.startPoint = canvas.getPointer(o.e);
+    this.polygon = this._drawPolygon(this.startPoint, 0);
+    canvas.add(this.polygon);
+    this.selectedPolygon = this.polygon;
   },
 
-  deactivate: function (canvas) {
+  onKeepDrawing: function(canvas, o) {
+    if (!this.polygon || !this.startPoint) return;
+    const pointer = canvas.getPointer(o.e);
+    const radius = Math.sqrt(
+      Math.pow(pointer.x - this.startPoint.x, 2) +
+        Math.pow(pointer.y - this.startPoint.y, 2)
+    );
+    //TODO: should be editing not replacing
+    canvas.remove(this.polygon); 
+    this.polygon = this._drawPolygon(this.startPoint, radius, this.polygon.sides);
+    canvas.add(this.polygon); 
+    canvas.renderAll();
+  },
+
+  onFinishDrawing: function(canvas, o) {
+    this.polygon.objectCaching = true;
+    this.polygon.setCoords();
+    this.selectedPolygon = this.polygon;
+    this.editingTool(canvas);
+    this.polygon = null;
+    this.startPoint = null;
+  },
+
+  onActivate: function (canvas) {
+  },
+
+  onDeactivate: function (canvas) {
     this.selectedPolygon = null;
+    this.polygon = null;
+    this.startPoint = null;
   },
 
-  editingTool: function (polygon = null) {
+  editingTool: function (canvas, polygon = null) {
     if (polygon) {
       this.selectedPolygon = polygon;
     }
@@ -183,6 +151,7 @@ const polygonImplementation = {
         const showSpokes = polygonOptions.querySelector(".show-spokes").checked;
         if (this.selectedPolygon) {
           this.decorate(
+            canvas,
             this.selectedPolygon,
             lineWidth,
             lineType,
@@ -195,20 +164,19 @@ const polygonImplementation = {
   },
 
   decorate(
+    canvas,
     polygon,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
     sides = DEFAULT_NUMBER_OF_SIDES,
     showSpokes = false
   ) {
-    if (!polygon || !this.canvas) return;
-    const existingGroup = this.canvas
+    if (!polygon || !canvas) return;
+    const existingGroup = canvas
       .getObjects()
-      .find(
-        (obj) => obj.__polygon_uid === polygon.__uid && obj.type === "group"
-      );
+      .find((obj) => obj._polygon_uid === polygon._uid && obj.type === "group");
     if (existingGroup) {
-      this.canvas.remove(existingGroup);
+      canvas.remove(existingGroup);
     }
     const strokeDashArray =
       lineType === LineType.DOTTED
@@ -231,10 +199,10 @@ const polygonImplementation = {
     }
     const combinedGroup = this._createGroup(polygon, groupObjects);
     if (!existingGroup) {
-      this.canvas.remove(polygon);
+      canvas.remove(polygon);
     }
-    this.canvas.add(combinedGroup);
-    this.canvas.renderAll();
+    canvas.add(combinedGroup);
+    canvas.renderAll();
   },
 
   _createPolygon(polygon, strokeWidth, strokeDashArray, sides) {
@@ -247,7 +215,7 @@ const polygonImplementation = {
       points.push({ x, y });
     }
     return new fabric.Polygon(points, {
-      __uid: this.polygonCounter++,
+      _uid: _polygonCounter++,
       originX: "center",
       originY: "center",
       stroke: polygon.stroke,
@@ -260,11 +228,34 @@ const polygonImplementation = {
     });
   },
 
+  _drawPolygon(center, radius, sides = DEFAULT_NUMBER_OF_SIDES) {
+    const points = [];
+    for (let i = 0; i < sides; i++) {
+      const angle = (i / sides) * 2 * Math.PI;
+      const x = center.x + radius * Math.cos(angle);
+      const y = center.y + radius * Math.sin(angle);
+      points.push({ x, y });
+    }
+    return new fabric.Polygon(points, {
+      _uid: _polygonCounter++,
+      left: center.x,
+      top: center.y,
+      originX: "center",
+      originY: "center",
+      stroke: DEFAULT_LINE_TYPE,
+      strokeWidth: DEFAULT_LINE_WIDTH,
+      fill: "transparent",
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+      sides: sides,
+    });
+  },
+
   _createSpokes(polygon, strokeWidth, strokeDashArray) {
-    const radius = polygon.width / 2;
     return polygon.points.map((point) => {
       return new fabric.Line([0, 0, point.x, point.y], {
-        __polygon_uid: polygon.__uid,
+        _polygon_uid: polygon._uid,
         stroke: polygon.stroke,
         strokeWidth: strokeWidth,
         originX: "center",
@@ -278,8 +269,8 @@ const polygonImplementation = {
 
   _createGroup(polygon, groupObjects) {
     return new fabric.Group(groupObjects, {
-      __group_uid: this.groupCounter++,
-      __polygon_uid: polygon.__uid,
+      _group_uid: _groupCounter++,
+      _polygon_uid: polygon._uid,
       left: polygon.left,
       top: polygon.top,
       originX: "center",

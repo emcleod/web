@@ -18,84 +18,73 @@ const MAX_RANDOMNESS = 0.1;
 const DEFAULT_DRAW_OUTER_LINES = false;
 const DEFAULT_DRAW_INNER_LINES = false;
 
+let _starCounter = 0;
+let _groupCounter = 0;
+
 const starImplementation = {
-  starCounter: 0,
-  groupCounter: 0,
   name: "star",
   buttonId: "star-btn",
   selectedStar: null,
+  star: null,
+  startPoint: null,
 
-  activate: function (canvas) {
-    this.canvas = canvas;
-    canvas.defaultCursor = "crosshair";
-    let isDrawing = false;
-    let star;
-    let startPoint;
-
-    const startDrawing = (o) => {
-      isDrawing = true;
-      startPoint = canvas.getPointer(o.e);
-      star = this.drawStar(
-        startPoint,
-        0,
-        DEFAULT_NUMBER_OF_POINTS,
-        DEFAULT_INNER_RADIUS_RATIO,
-        DEFAULT_RANDOMNESS,
-        true,
-        DEFAULT_DRAW_INNER_LINES,
-        DEFAULT_DRAW_OUTER_LINES
-      );
-      canvas.add(star);
-    };
-
-    const keepDrawing = (o) => {
-      if (!isDrawing) return;
-      const pointer = canvas.getPointer(o.e);
-      const radius = Math.sqrt(
-        Math.pow(pointer.x - startPoint.x, 2) +
-          Math.pow(pointer.y - startPoint.y, 2)
-      );
-      canvas.remove(star);
-      star = this.drawStar(
-        startPoint,
-        radius,
-        DEFAULT_NUMBER_OF_POINTS,
-        DEFAULT_INNER_RADIUS_RATIO,
-        DEFAULT_RANDOMNESS,
-        true,
-        DEFAULT_DRAW_INNER_LINES,
-        DEFAULT_DRAW_OUTER_LINES
-      );
-      canvas.add(star);
-      canvas.renderAll();
-    };
-
-    const finishDrawing = (o) => {
-      if (!isDrawing) return;
-      isDrawing = false;
-      star.setCoords();
-      this.selectedStar = star;
-      star.radius = star.width / 2;
-      this.editingTool();
-      canvas.renderAll();
-    };
-
-    canvas.on("mouse:down", startDrawing);
-    canvas.on("mouse:move", keepDrawing);
-    canvas.on("mouse:up", finishDrawing);
-
-    this.cleanupFunctions = [
-      () => canvas.off("mouse:down", startDrawing),
-      () => canvas.off("mouse:move", keepDrawing),
-      () => canvas.off("mouse:up", finishDrawing),
-    ];
+  onStartDrawing: function(canvas, o) {
+    this.startPoint = canvas.getPointer(o.e);
+    this.star = this.drawStar(
+      this.startPoint,
+      0,
+      DEFAULT_NUMBER_OF_POINTS,
+      DEFAULT_INNER_RADIUS_RATIO,
+      DEFAULT_RANDOMNESS,
+      true,
+      DEFAULT_DRAW_INNER_LINES,
+      DEFAULT_DRAW_OUTER_LINES
+    );
+    canvas.add(this.star);
+    this.selectedStar = this.star;
   },
 
-  deactivate: function (canvas) {
+  onKeepDrawing: function(canvas, o) {
+    if (!this.star || !this.startPoint) return;
+    const pointer = canvas.getPointer(o.e);
+    const radius = Math.sqrt(
+      Math.pow(pointer.x - this.startPoint.x, 2) +
+        Math.pow(pointer.y - this.startPoint.y, 2)
+    );
+    canvas.remove(this.star);
+    this.star = this.drawStar(
+      this.startPoint,
+      radius,
+      DEFAULT_NUMBER_OF_POINTS,
+      DEFAULT_INNER_RADIUS_RATIO,
+      DEFAULT_RANDOMNESS,
+      true,
+      DEFAULT_DRAW_INNER_LINES,
+      DEFAULT_DRAW_OUTER_LINES
+    );
+    canvas.add(this.star);
+    canvas.renderAll();
+  },
+
+  onFinishDrawing: function(canvas, o) {
+    this.star.setCoords();
+    this.selectedStar = this.star;
+    this.star.radius = this.star.width / 2;
+    this.editingTool(canvas);
+    this.star = null;
+    this.startPoint = null;
+  },
+
+  onActivate: function (canvas) {
+  },
+
+  onDeactivate: function (canvas) {
     this.selectedStar = null;
+    this.star = null;
+    this.startPoint = null;
   },
 
-  editingTool: function (star = null) {
+  editingTool: function(canvas, star = null) {
     if (star) {
       this.selectedStar = star;
     }
@@ -225,11 +214,11 @@ const starImplementation = {
     starOptions.addEventListener("click", (event) => {
       const target = event.target;
       if (target.classList.contains("randomize")) {
-        this.randomizeStar();
+        this.randomizeStar(canvas);
       } else if (target.classList.contains("reset")) {
-        this.resetStar();
+        this.resetStar(canvas);
       } else if (target.dataset.action === "finish") {
-        this.finishEditing();
+        this.finishEditing(canvas);
       }
     });
 
@@ -247,18 +236,18 @@ const starImplementation = {
           "symmetrical",
         ].some((cls) => target.classList.contains(cls))
       ) {
-        this.updateStar();
+        this._updateStar(canvas);
       }
     });
   },
 
-  randomizeStar: function () {
+  randomizeStar: function (canvas) {
     const randomness = parseFloat(document.querySelector(".randomness").value);
     const symmetrical = document.querySelector(".symmetrical").checked;
-    this.updateStar(randomness, symmetrical);
+    this._updateStar(canvas, randomness, symmetrical);
   },
 
-  resetStar: function () {
+  resetStar: function (canvas) {
     document.querySelector(".inner-radius-ratio").value =
       DEFAULT_INNER_RADIUS_RATIO;
     document.querySelector(".randomness").value = DEFAULT_RANDOMNESS;
@@ -266,11 +255,11 @@ const starImplementation = {
     document.querySelector(".draw-outer-lines").checked = false;
     document.querySelector(".randomness").value = DEFAULT_RANDOMNESS;
     document.querySelector(".symmetrical").checked = true;
-    this.updateStar();
+    this._updateStar(canvas);
   },
 
-  updateStar: function (randomness = null, symmetrical = null) {
-    if (!this.selectedStar || !this.canvas) return;
+  _updateStar: function(canvas, randomness = null, symmetrical = null) {
+    if (!this.selectedStar || !canvas) return;
     const lineWidth =
       parseInt(document.querySelector(".line-width").value) ||
       DEFAULT_LINE_WIDTH;
@@ -302,7 +291,7 @@ const starImplementation = {
     const center = { x: this.selectedStar.left, y: this.selectedStar.top };
     const radius = this.selectedStar.radius || this.selectedStar.width / 2;
   
-    this.canvas.remove(this.selectedStar);
+    canvas.remove(this.selectedStar);
     this.selectedStar = this.drawStar(
       center,
       radius,
@@ -320,14 +309,15 @@ const starImplementation = {
       fill: "transparent",
       radius: radius,
     });
-    this.canvas.add(this.selectedStar);
-    this.finishEditing();
+    canvas.add(this.selectedStar);
+    this.finishEditing(canvas);
   },
 
-  finishEditing: function () {
-    this.canvas.renderAll();
+  finishEditing: function (canvas) {
+    canvas.renderAll();
   },
 
+  //TODO if randomness has been applied inner and outer lines don't work properly
   drawStar: function (
     center,
     radius,
@@ -387,7 +377,7 @@ const starImplementation = {
     }
   
     const starPath = new fabric.Path(`M ${starPoints.join(" ")} Z`, {
-      __uid: this.starCounter++,
+      _uid: _starCounter++,
       left: center.x,
       top: center.y,
       originX: "center",
@@ -435,6 +425,8 @@ const starImplementation = {
     }
   
     const group = new fabric.Group([starPath, ...lines], {
+      _group_uid: _groupCounter++,
+      _star_uid: this.starCounter,
       left: center.x,
       top: center.y,
       originX: "center",

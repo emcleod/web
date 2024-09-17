@@ -12,7 +12,6 @@ import { SelectionTool } from "./tools/Selection";
 import { CanvasManager } from "./CanvasManager";
 
 (function () {
-  "use strict";
 
   document.addEventListener("DOMContentLoaded", () => {
     const canvasContainer = document.getElementById("canvas-container");
