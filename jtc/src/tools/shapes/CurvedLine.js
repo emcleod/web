@@ -1,4 +1,6 @@
-export const CurvedLineTool = {
+import { createBaseTool } from './BaseTool';
+
+const curvedLineImplementation = {
   name: "curved-line",
   buttonId: "curved-line-btn",
 
@@ -154,4 +156,6 @@ function cardinalSpline(points, tension = 0.5) {
   }
 
   return path;
-}
+};
+
+export const CurvedLineTool = createBaseTool(curvedLineImplementation);

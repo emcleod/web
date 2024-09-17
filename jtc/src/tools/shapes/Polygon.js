@@ -6,10 +6,10 @@ import {
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
 } from "./ToolUtils";
-
+import { createBaseTool } from "./BaseTool";
 const DEFAULT_NUMBER_OF_SIDES = 8;
 
-export const PolygonTool = {
+const polygonImplementation = {
   polygonCounter: 0,
   groupCounter: 0,
   name: "polygon",
@@ -295,3 +295,5 @@ export const PolygonTool = {
     });
   },
 };
+
+export const PolygonTool = createBaseTool(polygonImplementation);

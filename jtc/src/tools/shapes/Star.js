@@ -1,3 +1,4 @@
+import { createBaseTool } from "./BaseTool";
 import {
   fadeIn,
   removeToolOptions,
@@ -17,7 +18,7 @@ const MAX_RANDOMNESS = 0.1;
 const DEFAULT_DRAW_OUTER_LINES = false;
 const DEFAULT_DRAW_INNER_LINES = false;
 
-export const StarTool = {
+const starImplementation = {
   starCounter: 0,
   groupCounter: 0,
   name: "star",
@@ -457,3 +458,5 @@ export const StarTool = {
     return group;
   },
 };
+
+export const StarTool = createBaseTool(starImplementation);

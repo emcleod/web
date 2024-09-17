@@ -1,3 +1,4 @@
+import { createBaseTool } from "./BaseTool";
 import {
   fadeIn,
   removeToolOptions,
@@ -8,7 +9,7 @@ import {
 
 const DEFAULT_NUMBER_OF_SPOKES = 6;
 
-export const SpokesTool = {
+const spokesImplementation = {
   name: "spoke",
   buttonId: "spoke-btn",
   spokeCounter: 0,
@@ -257,4 +258,5 @@ export const SpokesTool = {
   },
 };
 
+export const SpokesTool = createBaseTool(spokesImplementation);
 //TODO: add randomness the same way that stars have

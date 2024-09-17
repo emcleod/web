@@ -1,3 +1,4 @@
+import { createBaseTool } from "./BaseTool";
 import {
   fadeIn,
   removeToolOptions,
@@ -7,7 +8,7 @@ import {
   DEFAULT_SEGMENTS,
 } from "./ToolUtils";
 
-export const SquareTool = {
+const squareImplementation = {
   squareCounter: 0,
   groupCounter: 0,
   name: "square",
@@ -280,3 +281,5 @@ export const SquareTool = {
     });
   },
 };
+
+export const SquareTool = createBaseTool(squareImplementation);

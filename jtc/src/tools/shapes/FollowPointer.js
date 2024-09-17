@@ -5,11 +5,12 @@ import {
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
 } from "./ToolUtils";
+import { createBaseTool } from "./BaseTool";
 
 const DEFAULT_SMOOTHING = 0;
 const MAX_SMOOTHING = 1;
 
-export const FollowPointerTool = {
+const followPointerImplementation = {
   lineCounter: 0,
   name: "follow-pointer",
   buttonId: "follow-pointer-btn",
@@ -285,3 +286,5 @@ export const FollowPointerTool = {
     }
   },
 };
+
+export const FollowPointerTool = createBaseTool(followPointerImplementation);

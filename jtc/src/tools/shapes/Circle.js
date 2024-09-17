@@ -6,8 +6,9 @@ import {
   DEFAULT_LINE_WIDTH,
   DEFAULT_SEGMENTS,
 } from './ToolUtils';
+import { createBaseTool } from './BaseTool';
 
-export const CircleTool = {
+const circleImplementation = {
   circleCounter: 0,
   groupCounter: 0,
   name: 'circle',
@@ -251,3 +252,5 @@ export const CircleTool = {
     });
   },
 };
+
+export const CircleTool = createBaseTool(circleImplementation);

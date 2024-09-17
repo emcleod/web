@@ -1,4 +1,6 @@
-export const TriangleTool = {
+import { createBaseTool } from "./BaseTool";
+
+const triangleImplementation = {
     name: 'triangle',
     buttonId: 'triangle-btn',
     activate: function(canvas) {
@@ -66,3 +68,4 @@ export const TriangleTool = {
     }
 };
 
+export const TriangleTool = createBaseTool(triangleImplementation);

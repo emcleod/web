@@ -1,6 +1,10 @@
-export const StraightLineTool = {
+import { createBaseTool } from './BaseTool';
+import { DEFAULT_LINE_TYPE, DEFAULT_LINE_WIDTH } from "./ToolUtils";
+
+const straightLineImplementation = {
   name: "straight-line",
   buttonId: "straight-line-btn",
+  
   activate: function (canvas) {
     canvas.defaultCursor = "crosshair";
     let isDrawing = false;
@@ -13,8 +17,8 @@ export const StraightLineTool = {
       line = new fabric.Line(
         [startPoint.x, startPoint.y, startPoint.x, startPoint.y],
         {
-          stroke: "black",
-          strokeWidth: 2,
+          stroke: DEFAULT_LINE_TYPE,
+          strokeWidth: DEFAULT_LINE_WIDTH,
           selectable: false,
           evented: false,
           objectCaching: false,
@@ -50,6 +54,7 @@ export const StraightLineTool = {
     ];
   },
 
+  // We'll move deactivate and other methods in future steps
   deactivate: function (canvas) {
     canvas.defaultCursor = "default";
     if (this.cleanupFunctions) {
@@ -58,3 +63,5 @@ export const StraightLineTool = {
     }
   },
 };
+
+export const StraightLineTool = createBaseTool(straightLineImplementation);

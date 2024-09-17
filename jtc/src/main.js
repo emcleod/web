@@ -41,17 +41,8 @@ import { CanvasManager } from "./CanvasManager";
     ]
     // Register drawing tools
     drawingTools.forEach((tool) => canvasManager.registerDrawingTool(tool));
-    // canvasManager.registerDrawingTool(CircleTool);
-    // canvasManager.registerDrawingTool(CurvedLineTool);
-    // canvasManager.registerDrawingTool(PolygonTool);
-    // canvasManager.registerDrawingTool(SpokesTool);
-    // canvasManager.registerDrawingTool(SquareTool);
-    // canvasManager.registerDrawingTool(StarTool);
-    // canvasManager.registerDrawingTool(StraightLineTool);
-    // canvasManager.registerDrawingTool(TriangleTool);
     // Register editing tools
     editingTools.forEach((tool) => canvasManager.registerEditingTool(tool));
-//    canvasManager.registerEditingTool(SelectionTool);
 
     // Add listeners for the editing tools
     editingTools.forEach((tool) => {
@@ -61,18 +52,29 @@ import { CanvasManager } from "./CanvasManager";
         });
       });
     });
+
     // Add listeners for the drawing tools
     drawingTools.forEach((tool) => {
-      document.getElementById(tool.buttonId).addEventListener("click", () => {
-        canvasManager
-          .activateTool(tool.name)
-          .then(() => {
-            tool.editingTool();
-          })
-          .catch((error) => {
-            console.error(`Failed to activate tool ${tool.name}`, error);
-          });
-      });
+      console.log("Processing tool:", tool.name); // Log the tool being processed
+      const button = document.getElementById(tool.buttonId);
+      if (button) {
+        button.addEventListener("click", () => {
+          canvasManager
+            .activateTool(tool.name)
+            .then(() => {
+              if (typeof tool.editingTool === 'function') {
+                tool.editingTool();
+              } else {
+                console.warn(`Tool ${tool.name} does not have an editingTool method`);
+              }
+            })
+            .catch((error) => {
+              console.error(`Failed to activate tool ${tool.name}`, error);
+            });
+        });
+      } else {
+        console.error(`Button not found for tool: ${tool.name} (buttonId: ${tool.buttonId})`);
+      }
     });
 
     // Activate selection tool by default
