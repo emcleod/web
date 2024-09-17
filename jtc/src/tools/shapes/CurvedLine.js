@@ -42,10 +42,6 @@ const curvedLineImplementation = {
   },
 
   deactivate() {
-    this.canvas.defaultCursor = "default";
-    this.cleanupFunctions.forEach((fn) => fn());
-    this.cleanupFunctions = [];
-
     this.tempDots.forEach((dot) => this.canvas.remove(dot));
     this.canvas.remove(this.curve);
     this.canvas.renderAll();

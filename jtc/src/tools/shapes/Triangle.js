@@ -59,13 +59,6 @@ const triangleImplementation = {
         ];
     },
 
-    deactivate: function(canvas) {
-        canvas.defaultCursor = 'default';
-        if (this.cleanupFunctions) {
-            this.cleanupFunctions.forEach(fn => fn());
-            this.cleanupFunctions = [];
-        }
-    }
 };
 
 export const TriangleTool = createBaseTool(triangleImplementation);

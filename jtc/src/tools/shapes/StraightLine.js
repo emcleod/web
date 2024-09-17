@@ -54,14 +54,6 @@ const straightLineImplementation = {
     ];
   },
 
-  // We'll move deactivate and other methods in future steps
-  deactivate: function (canvas) {
-    canvas.defaultCursor = "default";
-    if (this.cleanupFunctions) {
-      this.cleanupFunctions.forEach((fn) => fn());
-      this.cleanupFunctions = [];
-    }
-  },
 };
 
 export const StraightLineTool = createBaseTool(straightLineImplementation);

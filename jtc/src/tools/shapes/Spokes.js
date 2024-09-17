@@ -92,12 +92,6 @@ const spokesImplementation = {
   },
 
   deactivate: function (canvas) {
-    canvas.defaultCursor = "default";
-    if (this.cleanupFunctions) {
-      this.cleanupFunctions.forEach((fn) => fn());
-      this.cleanupFunctions = [];
-    }
-    removeToolOptions();
     this.selectedSpoke = null;
   },
 
