@@ -1,4 +1,5 @@
 import { createBaseTool } from "./BaseTool";
+import { DEFAULT_LINE_TYPE, DEFAULT_LINE_WIDTH } from "./ToolUtils";
 
 let _triangleCounter = 0;
 
@@ -10,27 +11,27 @@ const triangleImplementation = {
   startPoint: null,
 
   onStartDrawing: function(canvas, o) {
-    this.startPoint = canvas.getPointer(o.e);
+    this.startPoint = this.getPointer(canvas, o.e);
     this.triangle = new fabric.Triangle({
       _uid: _triangleCounter++,
       left: this.startPoint.x,
       top: this.startPoint.y,
       width: 0,
       height: 0,
-      stroke: "black",
-      strokeWidth: 2,
+      stroke: DEFAULT_LINE_TYPE,
+      strokeWidth: DEFAULT_LINE_WIDTH,
       fill: "transparent",
       selectable: false,
       evented: false,
       objectCaching: false
     });
-    canvas.add(this.triangle);
+    this.addObject(canvas, this.triangle);
     this.selectedTriangle = this.triangle;
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.triangle || !this.startPoint) return;
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     const width = Math.abs(pointer.x - this.startPoint.x);
     const height = Math.abs(pointer.y - this.startPoint.y);
     this.triangle.set({
@@ -45,6 +46,8 @@ const triangleImplementation = {
   onFinishDrawing: function(canvas, o) {
     this.triangle.objectCaching = true;
     this.triangle.setCoords();
+    this.selectedTriangle = this.triangle;
+    this.setActiveObject(canvas, this.triangle);
     this.triangle = null;
     this.startPoint = null;
   },
@@ -53,6 +56,7 @@ const triangleImplementation = {
   },
 
   onDeactivate: function(canvas) {
+    this.selectedTriangle = null;
     this.triangle = null;
     this.startPoint = null;
   }

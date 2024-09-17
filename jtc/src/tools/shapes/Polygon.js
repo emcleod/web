@@ -20,30 +20,30 @@ const polygonImplementation = {
   startPoint: null,
 
   onStartDrawing: function(canvas, o) {
-    this.startPoint = canvas.getPointer(o.e);
+    this.startPoint = this.getPointer(canvas, o.e);
     this.polygon = this._drawPolygon(this.startPoint, 0);
-    canvas.add(this.polygon);
+    this.addObject(canvas, this.polygon);
     this.selectedPolygon = this.polygon;
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.polygon || !this.startPoint) return;
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     const radius = Math.sqrt(
       Math.pow(pointer.x - this.startPoint.x, 2) +
         Math.pow(pointer.y - this.startPoint.y, 2)
     );
     //TODO: should be editing not replacing
-    canvas.remove(this.polygon); 
+    this.removeObject(canvas, this.polygon);
     this.polygon = this._drawPolygon(this.startPoint, radius, this.polygon.sides);
-    canvas.add(this.polygon); 
-    canvas.renderAll();
+    this.addObject(canvas, this.polygon); 
   },
 
   onFinishDrawing: function(canvas, o) {
     this.polygon.objectCaching = true;
     this.polygon.setCoords();
     this.selectedPolygon = this.polygon;
+    this.setActiveObject(canvas, this.polygon);
     this.editingTool(canvas);
     this.polygon = null;
     this.startPoint = null;
@@ -172,12 +172,8 @@ const polygonImplementation = {
     showSpokes = false
   ) {
     if (!polygon || !canvas) return;
-    const existingGroup = canvas
-      .getObjects()
-      .find((obj) => obj._polygon_uid === polygon._uid && obj.type === "group");
-    if (existingGroup) {
-      canvas.remove(existingGroup);
-    }
+    const existingGroup = this.findObject(canvas, (obj) => obj._polygon_uid === polygon._uid && obj.type === "group");
+    this.removeObject(canvas, existingGroup);
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -199,10 +195,9 @@ const polygonImplementation = {
     }
     const combinedGroup = this._createGroup(polygon, groupObjects);
     if (!existingGroup) {
-      canvas.remove(polygon);
+      this.removeObject(canvas, polygon);
     }
-    canvas.add(combinedGroup);
-    canvas.renderAll();
+    this.addObject(canvas, combinedGroup);
   },
 
   _createPolygon(polygon, strokeWidth, strokeDashArray, sides) {
@@ -268,17 +263,13 @@ const polygonImplementation = {
   },
 
   _createGroup(polygon, groupObjects) {
-    return new fabric.Group(groupObjects, {
-      _group_uid: _groupCounter++,
+    return this.createGroup(groupObjects, {
       _polygon_uid: polygon._uid,
       left: polygon.left,
-      top: polygon.top,
-      originX: "center",
-      originY: "center",
-      selectable: false,
-      evented: false,
+      top: polygon.top
     });
   },
+
 };
 
 export const PolygonTool = createBaseTool(polygonImplementation);

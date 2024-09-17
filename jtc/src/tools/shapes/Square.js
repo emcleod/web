@@ -19,7 +19,7 @@ const squareImplementation = {
   startPoint: null,
 
   onStartDrawing: function(canvas, o) {
-    this.startPoint = canvas.getPointer(o.e);
+    this.startPoint = this.getPointer(canvas, o.e);
     this.square = new fabric.Rect({
       _uid: _squareCounter++,
       left: this.startPoint.x,
@@ -35,18 +35,18 @@ const squareImplementation = {
       evented: false,
       objectCaching: false,
     });
-    canvas.add(this.square);
+    this.addObject(canvas, this.square);
     this.selectedSquare = this.square;
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.square || !this.startPoint) return;
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     const dx = pointer.x - this.startPoint.x;
     const dy = pointer.y - this.startPoint.y;
     const side = Math.max(Math.abs(dx), Math.abs(dy)) * 2;
-    this.square.set({width: side, height: side });
-    canvas.renderAll();
+    this.setObjectProperties(this.square, { width: side, height: side });
+    this.renderAll(canvas);
   },
 
   onFinishDrawing: function(canvas, o) {
@@ -167,12 +167,8 @@ const squareImplementation = {
   ) {
     if (!square || !canvas) return;
     // Remove existing group if it exists
-    const existingGroup = canvas
-      .getObjects()
-      .find((obj) => obj._square_uid === square._uid && obj.type === "group");
-    if (existingGroup) {
-      canvas.remove(existingGroup);
-    }
+    const existingGroup = this.findObject(canvas, (obj) => obj._square_uid === square._uid && obj.type === "group");
+    this.removeObject(canvas, existingGroup);
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -193,11 +189,10 @@ const squareImplementation = {
     const combinedGroup = this._createGroup(square, groupObjects);
     // Remove the original square from the canvas if it's not part of a group
     if (!existingGroup) {
-      canvas.remove(square);
+      this.removeObject(canvas, square);
     }
     // Add the combined group to the canvas
-    canvas.add(combinedGroup);
-    canvas.renderAll();
+    this.addObject(canvas, combinedGroup);
   },
 
   _createSquare(square, strokeWidth, strokeDashArray) {
@@ -250,15 +245,10 @@ const squareImplementation = {
   },
 
   _createGroup(square, groupObjects) {
-    return new fabric.Group(groupObjects, {
-      _group_uid: this.groupCounter++,
+    return this.createGroup(groupObjects, {
       _square_uid: square._uid,
       left: square.left,
-      top: square.top,
-      originX: "center",
-      originY: "center",
-      selectable: false,
-      evented: false,
+      top: square.top
     });
   },
 };

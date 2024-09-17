@@ -21,16 +21,16 @@ const followPointerImplementation = {
   points: null,
 
   onStartDrawing: function(canvas, o) {
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     this.points = [pointer.x, pointer.y];
     this.line = this._createLine(this.points);
-    canvas.add(this.line);
+    this.addObject(canvas, this.line);
     this.selectedLine = this.line;
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.line) return; 
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     this.points.push(pointer.x, pointer.y);
     this.line.path = [
       ["M", this.points[0], this.points[1]],
@@ -41,12 +41,13 @@ const followPointerImplementation = {
         )
         .filter(Boolean),
     ];
-    canvas.renderAll();
+    this.renderAll(canvas);
   },
 
   onFinishDrawing: function(canvas, o) {
     this.selectedLine = this.line;
     this.selectedLine.originalPoints = [...this.points];
+    this.setActiveObject(canvas, this.line);
     this.editingTool(canvas);
     this.line = null;
   },
@@ -101,7 +102,7 @@ const followPointerImplementation = {
           event.target.classList.contains(cls)
         )
       ) {
-        this.updateLine(canvas);
+        this._updateLine(canvas);
       }
     });
 
@@ -114,7 +115,7 @@ const followPointerImplementation = {
     });
   },
 
-  updateLine: function (canvas) {
+  _updateLine: function (canvas) {
     if (!this.selectedLine || !canvas) return;
     const lineWidth = parseInt(document.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
     const lineType = document.querySelector(".line-type").value;
@@ -134,21 +135,13 @@ const followPointerImplementation = {
   
     const originalPoints = this.selectedLine.originalPoints;
     const smoothedPoints = this._smoothLine(originalPoints, smoothing);
-  
     const newPath = this._pointsToPath(smoothedPoints);
-  
-    this.selectedLine.set({
-      path: newPath,
-      strokeWidth: lineWidth,
-      strokeDashArray: strokeDashArray,
-      smoothing: smoothing,
-    });
-  
-    canvas.renderAll();
+    this.setObjectProperties(this.selectedLine, { path: newPath, strokeWidth: lineWidth, strokeDashArray: strokeDashArray, smoothing: smoothing });
+    this.renderAll(canvas);
   },
 
   _finishEditing: function (canvas) {
-    canvas.renderAll();
+    this.renderAll(canvas);
   },
 
   _createLine: function (points, properties = {}) {
@@ -262,8 +255,7 @@ const followPointerImplementation = {
         strokeDashArray: strokeDashArray,
         smoothing: 0,
       });
-
-      canvas.renderAll();
+      this.renderAll(canvas);
       document.querySelector(".smoothing").value = 0;
     }
   },

@@ -1,11 +1,16 @@
 import { removeToolOptions } from './ToolUtils';
+import { CanvasInteractions } from '../../canvas/CanvasInteractions';
+import { fabric } from "fabric";
 
 export const createBaseTool = (toolImplementation) => {
   const baseTool = {
     ...toolImplementation,
+
+    ...CanvasInteractions,
+
     activate: function(canvas) {
       this.canvas = canvas;
-      canvas.defaultCursor = "crosshair";
+      this.setCursor(canvas, 'crosshair')
       this.isDrawing = false;
 
       const startDrawing = (o) => {
@@ -56,7 +61,7 @@ export const createBaseTool = (toolImplementation) => {
     },
     
     deactivate: function(canvas) {
-      canvas.defaultCursor = "default";
+      this.setCursor(canvas, 'default');
       if (this.cleanupFunctions) {
         this.cleanupFunctions.forEach((fn) => fn());
         this.cleanupFunctions = [];
@@ -69,6 +74,20 @@ export const createBaseTool = (toolImplementation) => {
       } else {
         console.warn(`Tool ${this.name} does not implement onDeactivate method`);
       }
+    },
+
+    createGroup: function(objects, options = {}) {
+      const groupCounter = this._groupCounter ? ++this._groupCounter : 1;
+      return new fabric.Group(objects, {
+        _group_uid: options.groupCounter || groupCounter,
+        left: options.left || 0,
+        top: options.top || 0,
+        originX: options.originX || 'center',
+        originY: options.originY || 'center',
+        selectable: options.selectable !== undefined ? options.selectable : false,
+        evented: options.evented !== undefined ? options.evented : false,
+        ...options
+      });
     }
   };
 

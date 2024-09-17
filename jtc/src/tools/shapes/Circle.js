@@ -19,7 +19,7 @@ const circleImplementation = {
   startPoint: null,
 
   onStartDrawing: function(canvas, o) {
-    this.startPoint = canvas.getPointer(o.e);
+    this.startPoint = this.getPointer(canvas, o.e);
     this.circle = new fabric.Circle({
       _uid: _circleCounter++,
       left: this.startPoint.x,
@@ -34,25 +34,26 @@ const circleImplementation = {
       evented: false,
       objectCaching: false,
     });
-    canvas.add(this.circle);
+    this.addObject(canvas, this.circle);
     this.selectedCircle = this.circle; 
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.circle || !this.startPoint) return;
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     const radius = Math.sqrt(
       Math.pow(pointer.x - this.startPoint.x, 2) +
         Math.pow(pointer.y - this.startPoint.y, 2)
     );
-    this.circle.set({ radius: radius });
-    canvas.renderAll();
+    this.setObjectProperties(this.circle, { radius: radius });
+    this.renderAll(canvas);
   },
 
   onFinishDrawing: function(canvas, o) {
     this.circle.objectCaching = true;
     this.circle.setCoords();
     this.selectedCircle = this.circle;
+    this.setActiveObject(canvas, this.circle);
     this.editingTool(canvas);
     this.circle = null;
     this.startPoint = null;
@@ -155,12 +156,8 @@ const circleImplementation = {
   ) {
     if (!circle || !canvas) return;
     // Remove existing group if it exists
-    const existingGroup = canvas
-      .getObjects()
-      .find((obj) => obj._circle_uid === circle._uid && obj.type === 'group');
-    if (existingGroup) {
-      canvas.remove(existingGroup);
-    }
+    const existingGroup = this.findObject(canvas, (obj) => obj._circle_uid === circle._uid && obj.type === 'group');
+    this.removeObject(canvas, existingGroup);
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -181,20 +178,13 @@ const circleImplementation = {
     const combinedGroup = this._createGroup(circle, groupObjects);
     // Remove the original circle from the canvas if it's not part of a group
     if (!existingGroup) {
-      canvas.remove(circle);
+      this.removeObject(canvas, circle);
     }
     // Add the combined group to the canvas
-    canvas.add(combinedGroup);
-    canvas.renderAll();
+    this.addObject(canvas, combinedGroup);
   },
 
   _createCircle(circle, strokeWidth, strokeDashArray) {
-    // const newCircle = new fabric.Circle(Object.assign({}, circle, {
-    //   strokeWidth: strokeWidth,
-    //   strokeDashArray: strokeDashArray,
-    //   selectable: false,
-    //   evented: false,
-    // }));
     return new fabric.Circle({
       _uid: _circleCounter++,
       radius: circle.radius,
@@ -230,15 +220,10 @@ const circleImplementation = {
   },
 
   _createGroup(circle, groupObjects) {
-    return new fabric.Group(groupObjects, {
-      _group_uid: _groupCounter++,
+    return this.createGroup(groupObjects, {
       _circle_uid: circle._uid,
       left: circle.left,
-      top: circle.top,
-      originX: 'center',
-      originY: 'center',
-      selectable: false,
-      evented: false,
+      top: circle.top
     });
   },
 };

@@ -20,7 +20,7 @@ const spokesImplementation = {
   startPoint: null,
 
   onStartDrawing: function(canvas, o) {
-    this.startPoint = canvas.getPointer(o.e);
+    this.startPoint = this.getPointer(canvas, o.e);
     this.spokes = [];
 
     for (let i = 0; i < DEFAULT_NUMBER_OF_SPOKES; i++) {
@@ -35,13 +35,13 @@ const spokesImplementation = {
         }
       );
       this.spokes.push(line);
-      canvas.add(line);
+      this.addObject(canvas, line);
     }
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.spokes || !this.startPoint) return;
-    const pointer = canvas.getPointer(o.e);
+    const pointer = this.getPointer(canvas, o.e);
     const radius = Math.sqrt(
       Math.pow(pointer.x - this.startPoint.x, 2) +
         Math.pow(pointer.y - this.startPoint.y, 2)
@@ -56,23 +56,23 @@ const spokesImplementation = {
       const y = this.startPoint.y + radius * Math.sin(angle);
       line.set({x2: x, y2: y});
     });
-    canvas.renderAll();
+    this.renderAll(canvas);
   },
 
   onFinishDrawing: function(canvas, o) {
     if (!this.spokes || !this.startPoint) return;
     this._createSpokeGroup(canvas, this.startPoint, this.spokes);
+    //TODO
+    //this.setActiveObject(canvas, ...this.spokes);
     this.editingTool(canvas);
     this.spokes = null; 
     this.startPoint = null;
   },
 
   onActivate: function (canvas) {
-    // Any specific activation logic can go here
   },
 
   onDeactivate: function (canvas) {
-    removeToolOptions();
     this.selectedSpokes = null;
     this.spokes = null;
     this.startPoint = null;
@@ -169,23 +169,18 @@ const spokesImplementation = {
   },
 
   _createSpokeGroup: function (canvas, centerPoint, spokes) {
-    const spokeGroup = new fabric.Group(spokes, {
-      _group_uid: _groupCounter++,
+    const spokeGroup = this.createGroup(spokes, {
       _spoke_uid: _spokesCounter++,
       left: centerPoint.x,
-      top: centerPoint.y,
-      originX: "center",
-      originY: "center",
-      selectable: true,
-      evented: true,
+      top: centerPoint.y
     });
-    canvas.remove(...spokes); // Remove individual lines
-    canvas.add(spokeGroup); // Add the group
+    this.removeObject(canvas, ...spokes);
+    this.addObject(canvas, spokeGroup);
     this.selectedSpokes = spokeGroup;
   },
 
-  _updateSpokes: function (canvas, spoke, lineWidth, lineType, segments) {
-    if (!spoke || !canvas) return;
+  _updateSpokes: function (canvas, spokes, lineWidth, lineType, segments) {
+    if (!spokes || !canvas) return;
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -195,13 +190,13 @@ const spokesImplementation = {
     
     // Get the center point and radius from the existing group
     const centerPoint = {
-      x: spoke.left,
-      y: spoke.top
+      x: spokes.left,
+      y: spokes.top
     };
-    const radius = spoke.width / 2; 
+    const radius = spokes.width / 2; 
 
     // Remove the old spoke group
-    canvas.remove(spoke);
+    this.removeObject(canvas, spokes);
 
     // Create new lines for the spokes
     let newSpokes = [];
@@ -211,7 +206,7 @@ const spokesImplementation = {
       const y = centerPoint.y + radius * Math.sin(angle);
 
       const line = new fabric.Line([centerPoint.x, centerPoint.y, x, y], {
-        stroke: spoke.stroke || DEFAULT_LINE_TYPE,
+        stroke: spokes.stroke || DEFAULT_LINE_TYPE,
         strokeWidth: lineWidth,
         strokeDashArray: strokeDashArray,
         selectable: false,
@@ -219,20 +214,14 @@ const spokesImplementation = {
       });
       newSpokes.push(line);
     }
-
-    const newSpoke = new fabric.Group(newSpokes, {
-      _group_uid: spoke._group_uid,
-      _spoke_uid: spoke._spoke_uid,
+    const newSpoke = this.createGroup(newSpokes, {
+      groupCounter: spokes._group_uid,
+      _spoke_uid: spokes._spoke_uid,
       left: centerPoint.x,
-      top: centerPoint.y,
-      originX: "center",
-      originY: "center",
-      selectable: true,
-      evented: true,
+      top: centerPoint.y
     });
-    canvas.add(newSpoke);
+    this.addObject(canvas, newSpoke);
     this.selectedSpokes = newSpoke;
-    canvas.renderAll();
   },
 };
 

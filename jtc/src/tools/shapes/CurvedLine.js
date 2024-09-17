@@ -12,8 +12,8 @@ const curvedLineImplementation = {
   curve: null,
 
   onStartDrawing: function (canvas, o) {
-    const pointer = canvas.getPointer(o.e);
-    this.addPoint(canvas, pointer);
+    const pointer = this.getPointer(canvas, o.e);
+    this._addPoint(canvas, pointer);
   },
 
   onKeepDrawing: function (canvas, o) {
@@ -25,39 +25,34 @@ const curvedLineImplementation = {
   },
 
   onActivate: function (canvas) {
-    this.canvas = canvas;
-    canvas.defaultCursor = "crosshair";
-
     const handleDoubleClick = (e) => {
-      const pointer = canvas.getPointer(e.e);
-      this.addPoint(canvas, pointer);
-      this.finish(canvas);
+      const pointer = this.getPointer(canvas, e.e);
+      this._addPoint(canvas, pointer);
+      this._finish(canvas);
     };
 
     const handleKeyDown = (e) => {
       if (e.key === "Enter" && this.points.length >= 2) {
-        this.finish(canvas);
+        this._finish(canvas);
       }
     };
 
-    canvas.on("mouse:dblclick", handleDoubleClick);
+    this.addCanvasListener(canvas, "mouse:dblclick", handleDoubleClick);
     document.addEventListener("keydown", handleKeyDown);
 
     // Store cleanup functions
     this.cleanupFunctions.push(
-      () => canvas.off("mouse:dblclick", handleDoubleClick),
+      () => this.removeCanvasListener(canvas, "mouse:dblclick", handleDoubleClick),
       () => document.removeEventListener("keydown", handleKeyDown)
     );
   },
 
   onDeactivate: function (canvas) {
-    this.tempDots.forEach((dot) => canvas.remove(dot));
-    canvas.remove(this.curve);
-    canvas.renderAll();
-    this.resetTool();
+    this.removeObjects(canvas, [...this.tempDots, this.curve]);
+    this._resetTool();
   },
 
-  addPoint: function (canvas, pointer) {
+  _addPoint: function (canvas, pointer) {
     const dot = new fabric.Circle({
       left: pointer.x,
       top: pointer.y,
@@ -66,19 +61,14 @@ const curvedLineImplementation = {
       selectable: false,
       evented: false,
     });
-
-    canvas.add(dot);
+    this.addObject(canvas, dot);
     this.tempDots.push(dot);
-
     this.points.push(pointer);
-    this.updateCurve(canvas);
+    this._updateCurve(canvas);
   },
 
-  updateCurve: function (canvas) {
-    if (this.curve) {
-      canvas.remove(this.curve);
-    }
-
+  _updateCurve: function (canvas) {
+    this.removeObject(canvas, this.curve);
     const pathData = this._cardinalSpline(this.points);
     this.curve = new fabric.Path(pathData, {
       stroke: "black",
@@ -87,32 +77,21 @@ const curvedLineImplementation = {
       selectable: false,
       evented: false,
     });
-
-    canvas.add(this.curve);
-    canvas.renderAll();
+    this.addObject(canvas, this.curve);
   },
 
-  finish: function (canvas) {
-    if (this.points.length < 2) return;
-
-    this.tempDots.forEach((dot) => canvas.remove(dot));
+  _finish: function (canvas) {
+    if (this.points.length < 2 || !this.curve) return;
+    this.removeObjects(canvas, this.tempDots);
     this.tempDots = [];
-
-    this.curve.set({
-      selectable: true,
-      evented: true,
-      objectCaching: true,
-    });
-
-    canvas.setActiveObject(this.curve);
-    canvas.renderAll();
+    this.setObjectProperties(this.curve, { selectable: true, evented: true, objectCaching: true });
+    this.setActiveObject(canvas, this.curve);
     canvas.fire("object:modified", { target: this.curve });
-
     this.selectedCurve = this.curve;
-    this.resetTool();
+    this._resetTool();
   },
 
-  resetTool: function () {
+  _resetTool: function () {
     this.points = [];
     this.curve = null;
     this.tempDots = [];

@@ -9,7 +9,7 @@ import { SpokesTool } from "./tools/shapes/Spokes";
 import { SquareTool } from "./tools/shapes/Square";
 import { TriangleTool } from "./tools/shapes/Triangle";
 import { SelectionTool } from "./tools/Selection";
-import { CanvasManager } from "./CanvasManager";
+import { CanvasManager } from "./canvas/CanvasManager";
 
 (function () {
 

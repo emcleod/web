@@ -11,7 +11,7 @@ const straightLineImplementation = {
   startPoint: null,
 
   onStartDrawing: function(canvas, o) {
-    this.startPoint = canvas.getPointer(o.e);
+    this.startPoint = this.getPointer(canvas, o.e);
     this.line = new fabric.Line(
       [this.startPoint.x, this.startPoint.y, this.startPoint.x, this.startPoint.y],
       {
@@ -23,15 +23,15 @@ const straightLineImplementation = {
         objectCaching: false,
       }
     );
-    canvas.add(this.line);
+    this.addObject(canvas, this.line);
     this.selectedLine = this.line;
   },
 
   onKeepDrawing: function(canvas, o) {
     if (!this.line || !this.startPoint) return;
-    const pointer = canvas.getPointer(o.e);
-    this.line.set({ x2: pointer.x, y2: pointer.y });
-    canvas.renderAll();
+    const pointer = this.getPointer(canvas, o.e);
+    this.setObjectProperties(this.line, { x2: pointer.x, y2: pointer.y });
+    this.renderAll(canvas);
   },
 
   onFinishDrawing: function(canvas, o) {
@@ -39,6 +39,7 @@ const straightLineImplementation = {
     this.line.setCoords();
     this.selectedLine = this.line;
     //this.editingTool(canvas);
+    this.setActiveObject(canvas, this.line);
     this.line = null;
     this.startPoint = null;
   },
