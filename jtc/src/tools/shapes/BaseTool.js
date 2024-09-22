@@ -53,7 +53,7 @@ export const createBaseTool = (toolImplementation) => {
             `Tool ${this.name} does not implement onFinishDrawing method`
           );
         }
-        canvas.renderAll();
+        canvas.renderAll(); // TODO
       };
 
       canvas.on("mouse:down", startDrawing);
@@ -108,9 +108,11 @@ export const createBaseTool = (toolImplementation) => {
     },
 
     editingTool: function (canvas, object = null) {
+      console.log("in editingTool")
       if (object) {
         this.selectedObject = object;
       }
+      console.log(this.selectedObject);
       if (!this.selectedObject) return;
 
       const container = document.getElementById("options-container");
@@ -150,46 +152,14 @@ export const createBaseTool = (toolImplementation) => {
         const lineWidth = parseInt(toolOptions.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
         const lineType = toolOptions.querySelector(".line-type").value;
         const segments = parseInt(toolOptions.querySelector(".segments")?.value) || DEFAULT_SEGMENTS;
-        
+        console.log("called updateObject");
         let additionalOptions = {};
         if (typeof this.getAdditionalOptions === 'function') {
           additionalOptions = this.getAdditionalOptions(toolOptions);
         }
-    
         this.decorate(canvas, this.selectedObject, lineWidth, lineType, segments, additionalOptions);
       }
     },
-    // updateObject: function (canvas) {
-    //   if (this.selectedObject) {
-    //     const className = `${this.name}-options`;
-    //     const toolOptions = document.querySelector(`.${className}`);
-    //     const lineWidth =
-    //       parseInt(toolOptions.querySelector(".line-width").value) ||
-    //       DEFAULT_LINE_WIDTH;
-    //     const lineType = toolOptions.querySelector(".line-type").value;
-    //     switch (this.toolType) {
-    //       case ToolType.LINE:
-    //         this.decorate(canvas, this.selectedObject, lineWidth, lineType);
-    //         break;
-    //       case ToolType.SHAPE:
-    //         const segments =
-    //           parseInt(toolOptions.querySelector(".segments")?.value) ||
-    //           DEFAULT_SEGMENTS;
-    //         this.decorate(
-    //           canvas,
-    //           this.selectedObject,
-    //           lineWidth,
-    //           lineType,
-    //           segments
-    //         );
-    //         break;
-    //       default:
-    //         console.warn(
-    //           `Unsupported tool type: ${this.toolType}. Can't update object`
-    //         );
-    //     }
-    //   }
-    // },
 
     finishEditing: function (container) {
       fadeOut(container, () => {

@@ -7,6 +7,7 @@ import {
 
 export class OptionsFactory {
   static getHTML(tool, className, currentValues = {}) {
+    console.log("in getHTML")
     let html = this.getBaseHTML(currentValues);
 
     if (tool.toolType === ToolType.LINE) {
@@ -17,6 +18,7 @@ export class OptionsFactory {
       console.warn(`Unhandled tool type ${tool.toolType}`);
     }
 
+    console.log(`tool.getToolHTML: ${tool.getToolHTML}`)
     if (typeof tool.getToolHTML === "function") {
       html += tool.getToolHTML(currentValues);
     }
@@ -67,28 +69,17 @@ export class OptionsFactory {
   }
 
   static setupListeners(container, updateCallback, finishCallback) {
+    console.log("setting up listeners")
     const inputs = container.querySelectorAll('input, select');
     inputs.forEach(input => {
       if (input.type === 'button') return;
+      console.log(input);
       input.addEventListener(input.type === 'checkbox' ? 'change' : 'input', updateCallback);
     });
   
     const finishButton = container.querySelector(".btn.finished");
     if (finishButton) finishButton.addEventListener("click", finishCallback);
   }
-  // static setupListeners(container, updateCallback, finishCallback) {
-  //   const lineWidthInput = container.querySelector(".line-width");
-  //   const lineTypeSelect = container.querySelector(".line-type");
-  //   const segmentsInput = container.querySelector(".segments");
-  //   const finishButton = container.querySelector(".btn.finished");
-
-  //   if (lineWidthInput)
-  //     lineWidthInput.addEventListener("input", updateCallback);
-  //   if (lineTypeSelect)
-  //     lineTypeSelect.addEventListener("change", updateCallback);
-  //   if (segmentsInput) segmentsInput.addEventListener("input", updateCallback);
-  //   if (finishButton) finishButton.addEventListener("click", finishCallback);
-  // }
 
   static getCSS() {
     return `

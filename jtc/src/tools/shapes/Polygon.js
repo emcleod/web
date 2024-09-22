@@ -1,10 +1,10 @@
 //TODO minimum number of sides
 import {
-  fadeIn,
-  removeToolOptions,
   LineType,
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
+  DEFAULT_SEGMENTS,
+  ToolType,
 } from "./ToolUtils";
 import { createBaseTool } from "./BaseTool";
 const DEFAULT_NUMBER_OF_SIDES = 8;
@@ -15,18 +15,19 @@ let _groupCounter = 0;
 const polygonImplementation = {
   name: "polygon",
   buttonId: "polygon-btn",
+  toolType: ToolType.SHAPE,
   selectedPolygon: null,
   polygon: null,
   startPoint: null,
 
-  onStartDrawing: function(canvas, o) {
+  onStartDrawing: function (canvas, o) {
     this.startPoint = this.getPointer(canvas, o.e);
     this.polygon = this._drawPolygon(this.startPoint, 0);
     this.addObject(canvas, this.polygon);
     this.selectedPolygon = this.polygon;
   },
 
-  onKeepDrawing: function(canvas, o) {
+  onKeepDrawing: function (canvas, o) {
     if (!this.polygon || !this.startPoint) return;
     const pointer = this.getPointer(canvas, o.e);
     const radius = Math.sqrt(
@@ -35,22 +36,24 @@ const polygonImplementation = {
     );
     //TODO: should be editing not replacing
     this.removeObject(canvas, this.polygon);
-    this.polygon = this._drawPolygon(this.startPoint, radius, this.polygon.sides);
-    this.addObject(canvas, this.polygon); 
+    this.polygon = this._drawPolygon(
+      this.startPoint,
+      radius,
+      this.polygon.sides
+    );
+    this.addObject(canvas, this.polygon);
   },
 
-  onFinishDrawing: function(canvas, o) {
+  onFinishDrawing: function (canvas, o) {
     this.polygon.objectCaching = true;
     this.polygon.setCoords();
     this.selectedPolygon = this.polygon;
-    this.setActiveObject(canvas, this.polygon);
-    this.editingTool(canvas);
+    this.editingTool(canvas, this.polygon);
     this.polygon = null;
     this.startPoint = null;
   },
 
-  onActivate: function (canvas) {
-  },
+  onActivate: function (canvas) {},
 
   onDeactivate: function (canvas) {
     this.selectedPolygon = null;
@@ -58,109 +61,45 @@ const polygonImplementation = {
     this.startPoint = null;
   },
 
-  editingTool: function (canvas, polygon = null) {
-    if (polygon) {
-      this.selectedPolygon = polygon;
-    }
-    if (!this.selectedPolygon) return;
-    const container = document.getElementById("options-container");
-
-    const defaultValues = {
-      strokeWidth: DEFAULT_LINE_WIDTH,
-      strokeDashArray: null,
-      sides: DEFAULT_NUMBER_OF_SIDES,
-      showSpokes: false,
-    };
-
-    const currentValues = this.selectedPolygon
+  currentValues: function () {
+    return this.selectedPolygon
       ? {
           strokeWidth: this.selectedPolygon.strokeWidth,
           strokeDashArray: this.selectedPolygon.strokeDashArray,
+          segments: this.selectedPolygon.segments || DEFAULT_SEGMENTS,
           sides: this.selectedPolygon.sides || DEFAULT_NUMBER_OF_SIDES,
           showSpokes: this.selectedPolygon.showSpokes || false,
         }
-      : defaultValues;
+      : {
+          strokeWidth: DEFAULT_LINE_WIDTH,
+          strokeDashArray: null,
+          segments: DEFAULT_SEGMENTS,
+          sides: DEFAULT_NUMBER_OF_SIDES,
+          showSpokes: false,
+        };
+  },
 
-    let polygonOptions = document.querySelector(".polygon-options");
-    if (!polygonOptions) {
-      removeToolOptions();
-      polygonOptions = document.createElement("div");
-      polygonOptions.classList.add("tool-options", "polygon-options");
-      polygonOptions.innerHTML = `
-          <h2>Polygon Options</h2>
-          Line width: <input type='number' class='line-width' value='${
-            currentValues.strokeWidth
-          }'>
-          Line type:
-          <select class='line-type'>
-            <option value='${LineType.SOLID}' ${
-        !currentValues.strokeDashArray ? "selected" : ""
-      }>Solid</option>
-            <option value='${LineType.DOTTED}' ${
-        currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1
-          ? "selected"
-          : ""
-      }>Dotted</option>
-            <option value='${LineType.DASHED}' ${
-        currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1
-          ? "selected"
-          : ""
-      }>Dashed</option>
-          </select>
-          Sides: <input type='number' class='sides' value='${
-            currentValues.sides
-          }' min='3'>
-          <label>
-            <input type='checkbox' class='show-spokes' ${
-              currentValues.showSpokes ? "checked" : ""
-            }>
-            Show spokes
-          </label>
-          <button class='btn finished' data-action='finish'>Finished!</button>
-        `;
+  getToolHTML(currentValues) {
+    console.log("Called getToolHTML");
+    return `
+      Number of sides: <input type='number' class='number-of-sides' value='${
+        currentValues.numberOfSides || DEFAULT_NUMBER_OF_SIDES
+      }'>
+      <label>
+        <input type='checkbox' class='show-spokes' ${
+          currentValues.showSpokes ? "checked" : ""
+        }>
+        Show spokes
+      </label>
+    `;
+  },
 
-      if (container.firstChild) {
-        container.insertBefore(polygonOptions, container.firstChild);
-      } else {
-        container.appendChild(polygonOptions);
-      }
-      fadeIn(polygonOptions);
-    } else {
-      polygonOptions.querySelector(".line-width").value =
-        currentValues.strokeWidth;
-      polygonOptions.querySelector(".line-type").value =
-        currentValues.strokeDashArray
-          ? currentValues.strokeDashArray[0] === 1
-            ? LineType.DOTTED
-            : LineType.DASHED
-          : LineType.SOLID;
-      polygonOptions.querySelector(".sides").value = currentValues.sides;
-      polygonOptions.querySelector(".show-spokes").checked =
-        currentValues.showSpokes;
-      container.insertBefore(polygonOptions, container.firstChild);
-    }
-    polygonOptions.addEventListener("click", (event) => {
-      const target = event.target;
-      if (target.dataset.action === "finish") {
-        const lineWidth =
-          parseInt(polygonOptions.querySelector(".line-width").value) ||
-          DEFAULT_LINE_WIDTH;
-        const lineType = polygonOptions.querySelector(".line-type").value;
-        const sides =
-          parseInt(polygonOptions.querySelector(".sides").value) || DEFAULT_NUMBER_OF_SIDES;
-        const showSpokes = polygonOptions.querySelector(".show-spokes").checked;
-        if (this.selectedPolygon) {
-          this.decorate(
-            canvas,
-            this.selectedPolygon,
-            lineWidth,
-            lineType,
-            sides,
-            showSpokes
-          );
-        }
-      }
-    });
+  getAdditionalOptions: function (toolOptions) {
+    const numberOfSides =
+      parseInt(toolOptions.querySelector(".number-of-sides").value) ||
+      DEFAULT_NUMBER_OF_SIDES;
+    const showSpokes = toolOptions.querySelector(".show-spokes").checked;
+    return { sides: numberOfSides, showSpokes: showSpokes };
   },
 
   decorate(
@@ -168,11 +107,15 @@ const polygonImplementation = {
     polygon,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
-    sides = DEFAULT_NUMBER_OF_SIDES,
-    showSpokes = false
+    segments, //TODO
+    additionalOptions = {}
   ) {
     if (!polygon || !canvas) return;
-    const existingGroup = this.findObject(canvas, (obj) => obj._polygon_uid === polygon._uid && obj.type === "group");
+    const { sides, showSpokes } = additionalOptions;
+    const existingGroup = this.findObject(
+      canvas,
+      (obj) => obj._polygon_uid === polygon._uid && obj.type === "group"
+    );
     this.removeObject(canvas, existingGroup);
     const strokeDashArray =
       lineType === LineType.DOTTED
@@ -192,6 +135,7 @@ const polygonImplementation = {
       groupObjects.push(
         ...this._createSpokes(newPolygon, lineWidth, strokeDashArray)
       );
+      this.selectedPolygon.showSpokes = true;
     }
     const combinedGroup = this._createGroup(polygon, groupObjects);
     if (!existingGroup) {
@@ -220,6 +164,7 @@ const polygonImplementation = {
       selectable: false,
       evented: false,
       sides: sides,
+      showSpokes: false,
     });
   },
 
@@ -244,6 +189,7 @@ const polygonImplementation = {
       evented: false,
       objectCaching: false,
       sides: sides,
+      showSpokes: false,
     });
   },
 
@@ -266,10 +212,9 @@ const polygonImplementation = {
     return this.createGroup(groupObjects, {
       _polygon_uid: polygon._uid,
       left: polygon.left,
-      top: polygon.top
+      top: polygon.top,
     });
   },
-
 };
 
 export const PolygonTool = createBaseTool(polygonImplementation);
