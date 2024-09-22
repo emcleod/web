@@ -7,7 +7,6 @@ import {
 
 export class OptionsFactory {
   static getHTML(tool, className, currentValues = {}) {
-    console.log("in getHTML")
     let html = this.getBaseHTML(currentValues);
 
     if (tool.toolType === ToolType.LINE) {
@@ -18,7 +17,6 @@ export class OptionsFactory {
       console.warn(`Unhandled tool type ${tool.toolType}`);
     }
 
-    console.log(`tool.getToolHTML: ${tool.getToolHTML}`)
     if (typeof tool.getToolHTML === "function") {
       html += tool.getToolHTML(currentValues);
     }
@@ -68,7 +66,7 @@ export class OptionsFactory {
     `;
   }
 
-  static setupListeners(container, updateCallback, finishCallback) {
+  static setupListeners(container, updateCallback, finishCallback, customActionCallback) {
     console.log("setting up listeners")
     const inputs = container.querySelectorAll('input, select');
     inputs.forEach(input => {
@@ -79,6 +77,12 @@ export class OptionsFactory {
   
     const finishButton = container.querySelector(".btn.finished");
     if (finishButton) finishButton.addEventListener("click", finishCallback);
+  
+    // Add listeners for custom action buttons
+    const customButtons = container.querySelectorAll('[data-action]');
+    customButtons.forEach(button => {
+      button.addEventListener('click', () => customActionCallback(button.dataset.action));
+    });
   }
 
   static getCSS() {

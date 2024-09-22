@@ -108,34 +108,46 @@ export const createBaseTool = (toolImplementation) => {
     },
 
     editingTool: function (canvas, object = null) {
-      console.log("in editingTool")
       if (object) {
         this.selectedObject = object;
       }
-      console.log(this.selectedObject);
       if (!this.selectedObject) return;
-
+      if (!this.selectedObject) {
+        return;
+      }
+    
       const container = document.getElementById("options-container");
+      if (!container) {
+        console.error("options-container not found");
+        return;
+      }
+      container.style.opacity = "";
+      container.style.transform = "";
+      container.style.transition = "";
+    
+      // Always remove existing options
+      removeToolOptions();
+    
+      // Create new options
       const currentValues = this.currentValues();
       const className = `${this.name}-options`;
-
-      removeToolOptions();
       const optionsHTML = OptionsFactory.getHTML(
         this,
         className,
         currentValues
       );
       container.innerHTML = optionsHTML;
-
+    
       const toolOptions = container.querySelector(`.${className}`);
       fadeIn(toolOptions);
-
+    
       OptionsFactory.setupListeners(
         toolOptions,
         () => this.updateObject(canvas),
-        () => this.finishEditing(container)
+        () => this.finishEditing(container),
+        (action) => this.handleCustomAction(canvas, action)
       );
-
+    
       // Apply CSS
       if (!document.querySelector("#tool-options-style")) {
         const style = document.createElement("style");
@@ -143,27 +155,50 @@ export const createBaseTool = (toolImplementation) => {
         style.textContent = OptionsFactory.getCSS();
         document.head.appendChild(style);
       }
+      console.log("Options HTML created:", optionsHTML);
+      console.log("Tool options added to DOM:", toolOptions);
+    },
+
+    handleCustomAction: function (canvas, action) {
+      if (typeof this.onCustomAction === "function") {
+        this.onCustomAction(canvas, action);
+      }
     },
 
     updateObject: function (canvas) {
       if (this.selectedObject) {
         const className = `${this.name}-options`;
         const toolOptions = document.querySelector(`.${className}`);
-        const lineWidth = parseInt(toolOptions.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
+        const lineWidth =
+          parseInt(toolOptions.querySelector(".line-width").value) ||
+          DEFAULT_LINE_WIDTH;
         const lineType = toolOptions.querySelector(".line-type").value;
-        const segments = parseInt(toolOptions.querySelector(".segments")?.value) || DEFAULT_SEGMENTS;
-        console.log("called updateObject");
+        const segments =
+          parseInt(toolOptions.querySelector(".segments")?.value) ||
+          DEFAULT_SEGMENTS;
         let additionalOptions = {};
-        if (typeof this.getAdditionalOptions === 'function') {
+        if (typeof this.getAdditionalOptions === "function") {
           additionalOptions = this.getAdditionalOptions(toolOptions);
         }
-        this.decorate(canvas, this.selectedObject, lineWidth, lineType, segments, additionalOptions);
+        this.decorate(
+          canvas,
+          this.selectedObject,
+          lineWidth,
+          lineType,
+          segments,
+          additionalOptions
+        );
       }
     },
 
     finishEditing: function (container) {
       fadeOut(container, () => {
         removeToolOptions();
+        this.selectedObject = null;
+        // Reset container styles after removal
+        container.style.opacity = "";
+        container.style.transform = "";
+        container.style.transition = "";
       });
     },
   };

@@ -1,9 +1,8 @@
 import {
-  fadeIn,
-  removeToolOptions,
   LineType,
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
+  ToolType
 } from "./ToolUtils";
 import { createBaseTool } from "./BaseTool";
 
@@ -13,9 +12,9 @@ const MAX_SMOOTHING = 1;
 let _lineCounter = 0;
 
 const followPointerImplementation = {
-  lineCounter: 0,
   name: "follow-pointer",
   buttonId: "follow-pointer-btn",
+  toolType: ToolType.LINE,
   selectedLine: null,
   line: null,
   points: null,
@@ -32,120 +31,102 @@ const followPointerImplementation = {
     if (!this.line) return; 
     const pointer = this.getPointer(canvas, o.e);
     this.points.push(pointer.x, pointer.y);
-    this.line.path = [
-      ["M", this.points[0], this.points[1]],
-      ...this.points
-        .slice(2)
-        .map((_, i) =>
-          i % 2 === 0 ? ["L", this.points[i + 2], this.points[i + 3]] : null
-        )
-        .filter(Boolean),
-    ];
+    this.line.path = this._pointsToPath(this.points);
     this.renderAll(canvas);
   },
 
   onFinishDrawing: function(canvas, o) {
     this.selectedLine = this.line;
     this.selectedLine.originalPoints = [...this.points];
-    this.setActiveObject(canvas, this.line);
-    this.editingTool(canvas);
+    this.editingTool(canvas, this.line);
     this.line = null;
   },
 
-  onActivate: function (canvas) {
-  },
+  onActivate: function (canvas) {},
 
   onDeactivate: function (canvas) {
     this.selectedLine = null;
     this.line = null;
   },
 
-  editingTool: function(canvas, line = null) {
-    if (line) {
-      this.selectedLine = line;
-    }
-    if (!this.selectedLine) return;
-    const container = document.getElementById("options-container");
-
-    const currentValues = {
-      strokeWidth: this.selectedLine.strokeWidth,
-      strokeDashArray: this.selectedLine.strokeDashArray,
-      smoothing: this.selectedLine.smoothing || DEFAULT_SMOOTHING,
-    };
-
-    let lineOptions = document.querySelector(".line-options");
-    if (!lineOptions) {
-      removeToolOptions();
-      lineOptions = document.createElement("div");
-      lineOptions.classList.add("tool-options", "line-options");
-      lineOptions.innerHTML = `
-        <h2>Line Options</h2>
-        Line width: <input type='number' class='line-width' value='${currentValues.strokeWidth}'>
-        Line type:
-        <select class='line-type'>
-          <option value='${LineType.SOLID}' ${!currentValues.strokeDashArray ? "selected" : ""}>Solid</option>
-          <option value='${LineType.DOTTED}' ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1 ? "selected" : ""}>Dotted</option>
-          <option value='${LineType.DASHED}' ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 5 ? "selected" : ""}>Dashed</option>
-        </select>
-        Smoothing: <input type='range' class='smoothing' value='${currentValues.smoothing}' min='0' max='${MAX_SMOOTHING}' step='0.01'>
-        <button class='btn reset-original'>Reset to Original</button>
-        <button class='btn finished' data-action='finish'>Finished!</button>
-      `;
-
-      container.insertBefore(lineOptions, container.firstChild);
-      fadeIn(lineOptions);
-    }
-
-    lineOptions.addEventListener("input", (event) => {
-      if (
-        ["line-width", "line-type", "smoothing"].some((cls) =>
-          event.target.classList.contains(cls)
-        )
-      ) {
-        this._updateLine(canvas);
-      }
-    });
-
-    lineOptions.addEventListener("click", (event) => {
-      if (event.target.classList.contains("reset-original")) {
-        this._resetToOriginal(canvas);
-      } else if (event.target.dataset.action === "finish") {
-        this._finishEditing(canvas);
-      }
-    });
+  currentValues: function () {
+    return this.selectedLine
+      ? {
+          strokeWidth: this.selectedLine.strokeWidth,
+          strokeDashArray: this.selectedLine.strokeDashArray,
+          smoothing: this.selectedLine.smoothing || DEFAULT_SMOOTHING,
+        }
+      : {
+          strokeWidth: DEFAULT_LINE_WIDTH,
+          strokeDashArray: null,
+          smoothing: DEFAULT_SMOOTHING,
+        };
   },
 
-  _updateLine: function (canvas) {
-    if (!this.selectedLine || !canvas) return;
-    const lineWidth = parseInt(document.querySelector(".line-width").value) || DEFAULT_LINE_WIDTH;
-    const lineType = document.querySelector(".line-type").value;
-    const smoothing = parseFloat(document.querySelector(".smoothing").value);
-  
-    let strokeDashArray;
-    switch (lineType) {
-      case LineType.DOTTED:
-        strokeDashArray = [1, 1];
-        break;
-      case LineType.DASHED:
-        strokeDashArray = [5, 5];
-        break;
-      default:
-        strokeDashArray = null;
+  getToolHTML: function(currentValues) {
+    return `
+      Smoothing: <input type='range' class='smoothing' value='${currentValues.smoothing}' min='0' max='${MAX_SMOOTHING}' step='0.01'>
+      <button class='btn reset-original' data-action='reset-original'>Reset to Original</button>
+    `;
+  },
+
+  onCustomAction: function (canvas, action) {
+    if (action === 'reset-original' && this.selectedLine && this.selectedLine.originalPoints) {
+      const newPath = this._pointsToPath(this.selectedLine.originalPoints);
+      this.setObjectProperties(this.selectedLine, {
+        path: newPath,
+        smoothing: DEFAULT_SMOOTHING
+      });
+      this.renderAll(canvas);
+      
+      // Update the smoothing slider value
+      const toolOptions = document.querySelector(`.${this.name}-options`);
+      if (toolOptions) {
+        const smoothingSlider = toolOptions.querySelector('.smoothing');
+        if (smoothingSlider) {
+          smoothingSlider.value = DEFAULT_SMOOTHING;
+        }
+      }
     }
-  
-    const originalPoints = this.selectedLine.originalPoints;
+  },
+
+  getAdditionalOptions: function(toolOptions) {
+    const smoothing = parseFloat(toolOptions.querySelector(".smoothing").value);
+    return { smoothing };
+  },
+
+  decorate: function(
+    canvas,
+    line,
+    lineWidth = DEFAULT_LINE_WIDTH,
+    lineType = LineType.SOLID,
+    segments,
+    additionalOptions = {}
+  ) {
+    if (!line || !canvas) return;
+
+    const strokeDashArray =
+      lineType === LineType.DOTTED ? [1, 1] :
+      lineType === LineType.DASHED ? [5, 5] :
+      null;
+
+    const smoothing = additionalOptions.smoothing || DEFAULT_SMOOTHING;
+    const originalPoints = line.originalPoints;
     const smoothedPoints = this._smoothLine(originalPoints, smoothing);
     const newPath = this._pointsToPath(smoothedPoints);
-    this.setObjectProperties(this.selectedLine, { path: newPath, strokeWidth: lineWidth, strokeDashArray: strokeDashArray, smoothing: smoothing });
-    this.renderAll(canvas);
-  },
 
-  _finishEditing: function (canvas) {
+    this.setObjectProperties(line, {
+      path: newPath,
+      strokeWidth: lineWidth,
+      strokeDashArray: strokeDashArray,
+      smoothing: smoothing
+    });
+
     this.renderAll(canvas);
   },
 
   _createLine: function (points, properties = {}) {
-    const line = new fabric.Path(`M ${points.join(" ")}`, {
+    return new fabric.Path(this._pointsToPath(points), {
       _uid: _lineCounter++,
       stroke: DEFAULT_LINE_TYPE,
       strokeWidth: DEFAULT_LINE_WIDTH,
@@ -156,7 +137,6 @@ const followPointerImplementation = {
       ...properties,
       strokeDashArray: properties.strokeDashArray || null,
     });
-    return line;
   },
 
   _smoothLine: function (points, smoothing) {
