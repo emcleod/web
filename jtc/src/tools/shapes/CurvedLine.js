@@ -1,3 +1,9 @@
+import { 
+  LineType, 
+  DEFAULT_LINE_TYPE, 
+  DEFAULT_LINE_WIDTH, 
+  ToolType
+} from "./ToolUtils";
 import { createBaseTool } from "./BaseTool";
 import { fabric } from "fabric";
 
@@ -6,6 +12,7 @@ let _curvedLineCounter = 0;
 const curvedLineImplementation = {
   name: "curved-line",
   buttonId: "curved-line-btn",
+  toolType: ToolType.LINE,
   selectedCurve: null,
   tempDots: [],
   points: [],
@@ -52,6 +59,41 @@ const curvedLineImplementation = {
     this._resetTool();
   },
 
+  currentValues: function () {
+    return this.selectedCurve
+      ? {
+          strokeWidth: this.selectedCurve.strokeWidth,
+          strokeDashArray: this.selectedCurve.strokeDashArray,
+        }
+      : {
+          strokeWidth: DEFAULT_LINE_WIDTH,
+          strokeDashArray: null,
+        };
+  },
+
+  decorate: function (
+    canvas,
+    curve,
+    lineWidth = DEFAULT_LINE_WIDTH,
+    lineType = LineType.SOLID
+  ) {
+    if (!curve || !canvas) return;
+
+    const strokeDashArray =
+      lineType === LineType.DOTTED
+        ? [1, 1]
+        : lineType === LineType.DASHED
+        ? [5, 5]
+        : null;
+
+    this.setObjectProperties(curve, {
+      strokeWidth: lineWidth,
+      strokeDashArray: strokeDashArray,
+    });
+
+    this.renderAll(canvas);
+  },
+
   _addPoint: function (canvas, pointer) {
     const dot = new fabric.Circle({
       left: pointer.x,
@@ -69,13 +111,15 @@ const curvedLineImplementation = {
 
   _updateCurve: function (canvas) {
     this.removeObject(canvas, this.curve);
-    const pathData = this._cardinalSpline(this.points);
+    const pathData = this._catmullRomSpline(this.points);
     this.curve = new fabric.Path(pathData, {
-      stroke: "black",
-      strokeWidth: 2,
+      _uid: _curvedLineCounter++,
+      stroke: DEFAULT_LINE_TYPE,
+      strokeWidth: DEFAULT_LINE_WIDTH,
       fill: "",
       selectable: false,
       evented: false,
+      objectCaching: false,
     });
     this.addObject(canvas, this.curve);
   },
@@ -85,9 +129,10 @@ const curvedLineImplementation = {
     this.removeObjects(canvas, this.tempDots);
     this.tempDots = [];
     this.setObjectProperties(this.curve, { selectable: true, evented: true, objectCaching: true });
-    this.setActiveObject(canvas, this.curve);
+//    this.setActiveObject(canvas, this.curve);
     canvas.fire("object:modified", { target: this.curve });
     this.selectedCurve = this.curve;
+    this.editingTool(canvas, this.curve);
     this._resetTool();
   },
 
@@ -97,57 +142,32 @@ const curvedLineImplementation = {
     this.tempDots = [];
   },
 
-  _cardinalSpline: function (points, tension = 0.5) {
+  _catmullRomSpline: function(points, tension = 0.5) {
     if (points.length < 2) return "";
     if (points.length === 2) {
       return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
     }
-
-    const controlPoints = [];
-
-    // Calculate control points
+  
+    let path = `M ${points[0].x} ${points[0].y}`;
+  
     for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[Math.max(i - 1, 0)];
+      const p0 = i === 0 ? points[0] : points[i - 1];
       const p1 = points[i];
       const p2 = points[i + 1];
-      const p3 = points[Math.min(i + 2, points.length - 1)];
-
-      const d1_1 = Math.sqrt(
-        Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2)
-      );
-      const d2_1 = Math.sqrt(
-        Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)
-      );
-      const d3_1 = Math.sqrt(
-        Math.pow(p3.x - p2.x, 2) + Math.pow(p3.y - p2.y, 2)
-      );
-
-      const d1_2 = d1_1 / (d1_1 + d2_1);
-      const d2_2 = d2_1 / (d2_1 + d3_1);
-
-      const control1 = {
-        x: p1.x + (p2.x - p0.x) * d1_2 * tension,
-        y: p1.y + (p2.y - p0.y) * d1_2 * tension,
-      };
-      const control2 = {
-        x: p2.x - (p3.x - p1.x) * d2_2 * tension,
-        y: p2.y - (p3.y - p1.y) * d2_2 * tension,
-      };
-
-      controlPoints.push(control1, control2);
+      const p3 = i === points.length - 2 ? p2 : points[i + 2];
+  
+      const cp1x = p1.x + (p2.x - p0.x) / 6 * tension;
+      const cp1y = p1.y + (p2.y - p0.y) / 6 * tension;
+  
+      const cp2x = p2.x - (p3.x - p1.x) / 6 * tension;
+      const cp2y = p2.y - (p3.y - p1.y) / 6 * tension;
+  
+      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
     }
-
-    let path = `M ${points[0].x} ${points[0].y}`;
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i + 1];
-      const c1 = controlPoints[i * 2];
-      const c2 = controlPoints[i * 2 + 1];
-      path += ` C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p1.x} ${p1.y}`;
-    }
-
+  
     return path;
   },
+
 };
 
 export const CurvedLineTool = createBaseTool(curvedLineImplementation);
