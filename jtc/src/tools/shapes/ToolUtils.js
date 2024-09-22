@@ -8,6 +8,11 @@ export const DEFAULT_LINE_WIDTH = 1;
 export const DEFAULT_LINE_TYPE = "black";
 export const DEFAULT_SEGMENTS = null;
 
+export const ToolType = Object.freeze({
+  LINE: "line-type",
+  SHAPE: "shape-type",
+});
+
 export const fadeIn = (element, duration = 300) => {
   element.style.opacity = 0;
   element.style.transform = "translateY(-20px)";

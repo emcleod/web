@@ -1,55 +1,94 @@
-import { LineType, DEFAULT_LINE_WIDTH, DEFAULT_SEGMENTS } from '../ToolUtils';
+import {
+  LineType,
+  ToolType,
+  DEFAULT_LINE_WIDTH,
+  DEFAULT_SEGMENTS,
+} from "../ToolUtils";
 
 export class OptionsFactory {
-  static getHTML(type, className, currentValues = {}) {
-    const baseHTML = this.getBaseHTML(type, currentValues);
-    const specificHTML = type === 'shapeType' 
-      ? this.getShapeTypeHTML(currentValues)
-      : this.getLineTypeHTML(currentValues);
-    
+  static getHTML(tool, className, currentValues = {}) {
+    let html = this.getBaseHTML(currentValues);
+
+    if (tool.toolType === ToolType.LINE) {
+      html += this.getLineTypeHTML(currentValues);
+    } else if (tool.toolType === ToolType.SHAPE) {
+      html += this.getShapeTypeHTML(currentValues);
+    } else {
+      console.warn(`Unhandled tool type ${tool.toolType}`);
+    }
+
+    if (typeof tool.getToolHTML === "function") {
+      html += tool.getToolHTML(currentValues);
+    }
+
+    html += `<button class='btn finished' data-action='finish'>Finished!</button>`;
+
     return `
       <div class="tool-options ${className}">
-        ${baseHTML}
-        ${specificHTML}
-        <button class='btn finished' data-action='finish'>Finished!</button>
+        ${html}
       </div>
     `;
   }
-  
-  static getBaseHTML(type, currentValues) {
+
+  static getBaseHTML(currentValues) {
     return `
-      <h2>${type.charAt(0).toUpperCase() + type.slice(1)} Options</h2>
-      Line width: <input type='number' class='line-width' value='${currentValues.strokeWidth || DEFAULT_LINE_WIDTH}'>
+      Line width: <input type='number' class='line-width' value='${
+        currentValues.strokeWidth || DEFAULT_LINE_WIDTH
+      }'>
       Line type:
       <select class='line-type'>
-        <option value='${LineType.SOLID}' ${!currentValues.strokeDashArray ? 'selected' : ''}>Solid</option>
-        <option value='${LineType.DOTTED}' ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1 ? 'selected' : ''}>Dotted</option>
-        <option value='${LineType.DASHED}' ${currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1 ? 'selected' : ''}>Dashed</option>
+        <option value='${LineType.SOLID}' ${
+      !currentValues.strokeDashArray ? "selected" : ""
+    }>Solid</option>
+        <option value='${LineType.DOTTED}' ${
+      currentValues.strokeDashArray && currentValues.strokeDashArray[0] === 1
+        ? "selected"
+        : ""
+    }>Dotted</option>
+        <option value='${LineType.DASHED}' ${
+      currentValues.strokeDashArray && currentValues.strokeDashArray[0] > 1
+        ? "selected"
+        : ""
+    }>Dashed</option>
       </select>
     `;
   }
 
   static getLineTypeHTML(currentValues) {
-    return ''; // No additional options for basic line type
+    return "";
   }
 
   static getShapeTypeHTML(currentValues) {
     return `
-      Segments: <input type='number' class='segments' value='${currentValues.segments || DEFAULT_SEGMENTS}'>
+      Segments: <input type='number' class='segments' value='${
+        currentValues.segments || DEFAULT_SEGMENTS
+      }'>
     `;
   }
 
   static setupListeners(container, updateCallback, finishCallback) {
-    const lineWidthInput = container.querySelector('.line-width');
-    const lineTypeSelect = container.querySelector('.line-type');
-    const segmentsInput = container.querySelector('.segments');
-    const finishButton = container.querySelector('.btn.finished');
-
-    if (lineWidthInput) lineWidthInput.addEventListener('input', updateCallback);
-    if (lineTypeSelect) lineTypeSelect.addEventListener('change', updateCallback);
-    if (segmentsInput) segmentsInput.addEventListener('input', updateCallback);
-    if (finishButton) finishButton.addEventListener('click', finishCallback);
+    const inputs = container.querySelectorAll('input, select');
+    inputs.forEach(input => {
+      if (input.type === 'button') return;
+      input.addEventListener(input.type === 'checkbox' ? 'change' : 'input', updateCallback);
+    });
+  
+    const finishButton = container.querySelector(".btn.finished");
+    if (finishButton) finishButton.addEventListener("click", finishCallback);
   }
+  // static setupListeners(container, updateCallback, finishCallback) {
+  //   const lineWidthInput = container.querySelector(".line-width");
+  //   const lineTypeSelect = container.querySelector(".line-type");
+  //   const segmentsInput = container.querySelector(".segments");
+  //   const finishButton = container.querySelector(".btn.finished");
+
+  //   if (lineWidthInput)
+  //     lineWidthInput.addEventListener("input", updateCallback);
+  //   if (lineTypeSelect)
+  //     lineTypeSelect.addEventListener("change", updateCallback);
+  //   if (segmentsInput) segmentsInput.addEventListener("input", updateCallback);
+  //   if (finishButton) finishButton.addEventListener("click", finishCallback);
+  // }
 
   static getCSS() {
     return `
@@ -78,4 +117,3 @@ export class OptionsFactory {
     `;
   }
 }
-

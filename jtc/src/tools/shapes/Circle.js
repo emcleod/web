@@ -1,9 +1,9 @@
 import {
-  fadeOut,
   LineType,
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
   DEFAULT_SEGMENTS,
+  ToolType,
 } from "./ToolUtils";
 import { createBaseTool } from "./BaseTool";
 
@@ -13,7 +13,7 @@ let _groupCounter = 0;
 const circleImplementation = {
   name: "circle",
   buttonId: "circle-btn",
-  isShapeTool: true,
+  toolType: ToolType.SHAPE,
   selectedCircle: null,
   circle: null,
   startPoint: null,
@@ -53,7 +53,6 @@ const circleImplementation = {
     this.circle.objectCaching = true;
     this.circle.setCoords();
     this.selectedCircle = this.circle;
-    this.setActiveObject(canvas, this.circle);
     this.editingTool(canvas, this.circle);
     this.circle = null;
     this.startPoint = null;
@@ -67,7 +66,7 @@ const circleImplementation = {
     this.startPoint = null;
   },
 
-  currentValues: function() {
+  currentValues: function () {
     return this.selectedCircle
       ? {
           strokeWidth: this.selectedCircle.strokeWidth,
@@ -142,7 +141,6 @@ const circleImplementation = {
       const angle = i * angleStep;
       const x = circle.radius * Math.cos(angle);
       const y = circle.radius * Math.sin(angle);
-
       return new fabric.Line([0, 0, x, y], {
         _circle_uid: circle._uid,
         stroke: circle.stroke,
