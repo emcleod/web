@@ -10,10 +10,13 @@ import { fabric } from "fabric";
 const DEFAULT_NUMBER_OF_PETALS = 6;
 const MIN_PETALS = 3;
 const MAX_PETALS = 20;
-const DEFAULT_INNER_RADIUS_RATIO = 0.3;
+const DEFAULT_INNER_RADIUS_RATIO = 0.0;
 const MIN_INNER_RADIUS_RATIO = 0;
 const MAX_INNER_RADIUS_RATIO = 0.9;
-const DEFAULT_RANDOMNESS = 0;
+const DEFAULT_PETAL_WIDTH_RATIO = 0.25;
+const MIN_PETAL_WIDTH_RATIO = 0.05;
+const MAX_PETAL_WIDTH_RATIO = 1.0;
+const DEFAULT_RANDOMNESS = 0.0;
 const MAX_RANDOMNESS = 0.3;
 const DEFAULT_DRAW_INNER_LINES = false;
 
@@ -38,18 +41,28 @@ const flowerImplementation = {
     const pointer = this.getPointer(canvas, o.e);
     const radius = Math.sqrt(
       Math.pow(pointer.x - this.startPoint.x, 2) +
-      Math.pow(pointer.y - this.startPoint.y, 2)
+        Math.pow(pointer.y - this.startPoint.y, 2)
+    );
+    const initialAngle = Math.atan2(
+      pointer.y - this.startPoint.y,
+      pointer.x - this.startPoint.x
     );
     this.removeObject(canvas, this.flower);
-    this.flower = this._drawFlower(this.startPoint, radius);
+    this.flower = this._drawFlower(this.startPoint, radius, initialAngle);
     this.addObject(canvas, this.flower);
   },
 
   onFinishDrawing: function (canvas, o) {
     if (!this.flower || !this.startPoint) return;
+    const endPoint = this.getPointer(canvas, o.e);
+    const initialAngle = Math.atan2(
+      endPoint.y - this.startPoint.y,
+      endPoint.x - this.startPoint.x
+    );
     this.flower.setCoords();
     this.selectedFlower = this.flower;
     this.flower.radius = this.flower.width / 2;
+    this.flower.initialAngle = initialAngle;
     this.editingTool(canvas, this.flower);
     this.flower = null;
     this.startPoint = null;
@@ -71,6 +84,8 @@ const flowerImplementation = {
           petals: this.selectedFlower.petals || DEFAULT_NUMBER_OF_PETALS,
           innerRadiusRatio:
             this.selectedFlower.innerRadiusRatio || DEFAULT_INNER_RADIUS_RATIO,
+          petalWidthRatio:
+            this.selectedFlower.petalWidthRatio || DEFAULT_PETAL_WIDTH_RATIO,
           randomness: this.selectedFlower.randomness || DEFAULT_RANDOMNESS,
           drawInnerLines:
             this.selectedFlower.drawInnerLines !== undefined
@@ -82,6 +97,7 @@ const flowerImplementation = {
           strokeDashArray: null,
           petals: DEFAULT_NUMBER_OF_PETALS,
           innerRadiusRatio: DEFAULT_INNER_RADIUS_RATIO,
+          petalWidthRatio: DEFAULT_PETAL_WIDTH_RATIO,
           randomness: DEFAULT_RANDOMNESS,
           drawInnerLines: DEFAULT_DRAW_INNER_LINES,
         };
@@ -92,9 +108,12 @@ const flowerImplementation = {
       Petals: <input type='number' class='petals' value='${
         currentValues.petals
       }' min='${MIN_PETALS}' max='${MAX_PETALS}'>
-      Inner radius ratio: <input type='range' class='inner-radius-ratio' value='${
+      Inner radius: <input type='range' class='inner-radius-ratio' value='${
         currentValues.innerRadiusRatio
       }' min='${MIN_INNER_RADIUS_RATIO}' max='${MAX_INNER_RADIUS_RATIO}' step='0.01'>
+      Petal width: <input type='range' class='petal-width-ratio' values='${
+        currentValues.petalWidthRatio
+      }' min='${MIN_PETAL_WIDTH_RATIO}' max='${MAX_PETAL_WIDTH_RATIO}' step='0.01'>
       Randomness: <input type='range' class='randomness' value='${
         currentValues.randomness
       }' min='0' max='${MAX_RANDOMNESS}' step='0.01'>
@@ -114,6 +133,9 @@ const flowerImplementation = {
       petals: parseInt(toolOptions.querySelector(".petals").value),
       innerRadiusRatio: parseFloat(
         toolOptions.querySelector(".inner-radius-ratio").value
+      ),
+      petalWidthRatio: parseFloat(
+        toolOptions.querySelector(".petal-width-ratio").value
       ),
       randomness: parseFloat(toolOptions.querySelector(".randomness").value),
       drawInnerLines: toolOptions.querySelector(".draw-inner-lines").checked,
@@ -151,6 +173,7 @@ const flowerImplementation = {
     this.selectedFlower = this._drawFlower(
       center,
       radius,
+      flower.initialAngle,
       lineWidth,
       lineType,
       additionalOptions
@@ -168,6 +191,7 @@ const flowerImplementation = {
   _drawFlower: function (
     center,
     radius,
+    initialAngle = 0,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = DEFAULT_LINE_TYPE,
     options = {}
@@ -175,6 +199,7 @@ const flowerImplementation = {
     const {
       petals = DEFAULT_NUMBER_OF_PETALS,
       innerRadiusRatio = DEFAULT_INNER_RADIUS_RATIO,
+      petalWidthRatio = DEFAULT_PETAL_WIDTH_RATIO,
       randomness = DEFAULT_RANDOMNESS,
       drawInnerLines = DEFAULT_DRAW_INNER_LINES,
     } = options;
@@ -192,33 +217,51 @@ const flowerImplementation = {
     const innerLines = [];
 
     for (let i = 0; i < petals; i++) {
-      const startAngle = i * angleStep;
-      const endAngle = (i + 1) * angleStep;
-      const midAngle = (startAngle + endAngle) / 2;
+      const startAngle = initialAngle + i * angleStep;
+      const endAngle = initialAngle + (i + 1) * angleStep;
 
-      // Apply randomness
-      const randStartAngle = startAngle + (Math.random() - 0.5) * randomness * angleStep;
-      const randEndAngle = endAngle + (Math.random() - 0.5) * randomness * angleStep;
-      const randRadius = radius * (1 + (Math.random() - 0.5) * randomness);
+      const innerStartPoint = this._polarToCartesian(
+        center,
+        innerRadius,
+        startAngle
+      );
+      const innerEndPoint = this._polarToCartesian(
+        center,
+        innerRadius,
+        endAngle
+      );
+      const outerPoint = this._polarToCartesian(
+        center,
+        radius,
+        (startAngle + endAngle) / 2
+      );
 
-      // Calculate control points for the petal curve
-      const startPoint = this._polarToCartesian(center, innerRadius, randStartAngle);
-      const endPoint = this._polarToCartesian(center, innerRadius, randEndAngle);
-      const peakPoint = this._polarToCartesian(center, randRadius, midAngle);
+      // Apply randomness to the outer point
+      const randOuterPoint = {
+        x: outerPoint.x + (Math.random() - 0.5) * randomness * radius,
+        y: outerPoint.y + (Math.random() - 0.5) * randomness * radius,
+      };
 
-      // Draw petal
+      // Calculate the length of the chords
+      const chordLength = Math.hypot(
+        randOuterPoint.x - innerStartPoint.x,
+        randOuterPoint.y - innerStartPoint.y
+      );
+      const arcRadius =
+        chordLength / 2 / Math.sin((petalWidthRatio * Math.PI) / 2);
+
       flowerPath.push(
-        `M ${startPoint.x} ${startPoint.y}`,
-        `Q ${peakPoint.x} ${peakPoint.y} ${endPoint.x} ${endPoint.y}`,
+        `M ${innerStartPoint.x} ${innerStartPoint.y}`,
+        `A ${arcRadius} ${arcRadius} 0 0 1 ${randOuterPoint.x} ${randOuterPoint.y}`,
+        `A ${arcRadius} ${arcRadius} 0 0 1 ${innerEndPoint.x} ${innerEndPoint.y}`,
         `L ${center.x} ${center.y}`,
         "Z"
       );
 
-      // Draw inner line
       if (drawInnerLines) {
         innerLines.push(
           new fabric.Line(
-            [center.x, center.y, peakPoint.x, peakPoint.y],
+            [center.x, center.y, randOuterPoint.x, randOuterPoint.y],
             {
               stroke: lineType,
               strokeWidth: lineWidth,
@@ -236,6 +279,7 @@ const flowerImplementation = {
       top: center.y,
       originX: "center",
       originY: "center",
+      initialAngle: initialAngle,
       stroke: lineType,
       strokeWidth: lineWidth,
       strokeDashArray: strokeDashArray,
@@ -249,8 +293,11 @@ const flowerImplementation = {
       _flower_uid: _flowerCounter++,
       left: center.x,
       top: center.y,
+      width: radius * 2,
+      height: radius * 2,
       petals: petals,
       innerRadiusRatio: innerRadiusRatio,
+      petalWidthRatio: petalWidthRatio,
       randomness: randomness,
       drawInnerLines: drawInnerLines,
     });
@@ -275,6 +322,8 @@ const flowerImplementation = {
     const toolOptions = document.querySelector(`.${this.name}-options`);
     toolOptions.querySelector(".inner-radius-ratio").value =
       DEFAULT_INNER_RADIUS_RATIO;
+    toolOptions.querySelector(".petal-width-ratio").value =
+      DEFAULT_PETAL_WIDTH_RATIO;
     toolOptions.querySelector(".randomness").value = DEFAULT_RANDOMNESS;
     toolOptions.querySelector(".draw-inner-lines").checked =
       DEFAULT_DRAW_INNER_LINES;
@@ -283,3 +332,25 @@ const flowerImplementation = {
 };
 
 export const FlowerTool = createBaseTool(flowerImplementation);
+
+// TODO gives a fat flower
+// const midPoint1 = this._polarToCartesian(
+//   center,
+//   radius,
+//   (startAngle + midAngle) / 2
+// );
+// const midPoint2 = this._polarToCartesian(
+//   center,
+//   radius,
+//   (midAngle + endAngle) / 2
+// );
+
+// flowerPath.push(
+//   `M ${startPoint.x} ${startPoint.y}`,
+//   `A ${radius} ${radius} 0 0 1 ${midPoint1.x} ${midPoint1.y}`,
+//   `L ${randPeakPoint.x} ${randPeakPoint.y}`,
+//   `L ${midPoint2.x} ${midPoint2.y}`,
+//   `A ${radius} ${radius} 0 0 1 ${endPoint.x} ${endPoint.y}`,
+//   `L ${center.x} ${center.y}`,
+//   "Z"
+// );

@@ -36,7 +36,7 @@ const spokesImplementation = {
   onKeepDrawing: function (canvas, o) {
     if (!this.spokes || !this.startPoint) return;
     const pointer = this.getPointer(canvas, o.e);
-    this._updateSpokes(canvas, this.startPoint, pointer, this.spokes);
+    this._updateSpokes(this.startPoint, pointer, this.spokes);
     this.renderAll(canvas);
   },
 
@@ -131,7 +131,6 @@ const spokesImplementation = {
   ) {
     if (!spokes || !canvas) return;
 
-
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -146,7 +145,7 @@ const spokesImplementation = {
     const radius = spokes.width / 2;
     const { numberOfSpokes, randomness } = additionalOptions;
 
-        // Remove the old spoke group
+    // Remove the old spoke group
     this.removeObject(canvas, this.selectedSpokes);
     spokes.getObjects().forEach((spoke) => {
       this.removeObject(canvas, spoke);
@@ -220,13 +219,11 @@ const spokesImplementation = {
   },
 
   _updateSpokes: function (
-    canvas,
     startPoint,
     endPoint,
     spokes,
     randomness = 0
   ) {
-    console.log("updating strokes");
     const radius = Math.sqrt(
       Math.pow(endPoint.x - startPoint.x, 2) +
         Math.pow(endPoint.y - startPoint.y, 2)
