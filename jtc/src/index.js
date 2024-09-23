@@ -2,6 +2,7 @@ import "./styles.css";
 import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { FollowPointerTool } from "./tools/shapes/FollowPointer";
+import { OvalTool } from "./tools/shapes/Oval";
 import { PolygonTool } from "./tools/shapes/Polygon";
 import { RectangleTool } from "./tools/shapes/Rectangle";
 import { StarTool } from "./tools/shapes/Star";
@@ -28,6 +29,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       CircleTool,
       CurvedLineTool,
       FollowPointerTool,
+      OvalTool,
       PolygonTool,
       RectangleTool,
       SpokesTool,
