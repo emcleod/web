@@ -67,12 +67,11 @@ export class OptionsFactory {
   }
 
   static setupListeners(container, updateCallback, finishCallback, customActionCallback) {
-    console.log("setting up listeners")
     const inputs = container.querySelectorAll('input, select');
     inputs.forEach(input => {
       if (input.type === 'button') return;
-      console.log(input);
-      input.addEventListener(input.type === 'checkbox' ? 'change' : 'input', updateCallback);
+      const eventType = input.type === 'range' || input.type === 'number' ? 'input' : 'change';
+      input.addEventListener(eventType, updateCallback);
     });
   
     const finishButton = container.querySelector(".btn.finished");

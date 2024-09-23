@@ -155,8 +155,6 @@ export const createBaseTool = (toolImplementation) => {
         style.textContent = OptionsFactory.getCSS();
         document.head.appendChild(style);
       }
-      console.log("Options HTML created:", optionsHTML);
-      console.log("Tool options added to DOM:", toolOptions);
     },
 
     handleCustomAction: function (canvas, action) {

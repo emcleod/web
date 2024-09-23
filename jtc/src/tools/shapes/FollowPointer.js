@@ -2,7 +2,7 @@ import {
   LineType,
   DEFAULT_LINE_TYPE,
   DEFAULT_LINE_WIDTH,
-  ToolType
+  ToolType,
 } from "./ToolUtils";
 import { createBaseTool } from "./BaseTool";
 
@@ -19,7 +19,7 @@ const followPointerImplementation = {
   line: null,
   points: null,
 
-  onStartDrawing: function(canvas, o) {
+  onStartDrawing: function (canvas, o) {
     const pointer = this.getPointer(canvas, o.e);
     this.points = [pointer.x, pointer.y];
     this.line = this._createLine(this.points);
@@ -27,15 +27,15 @@ const followPointerImplementation = {
     this.selectedLine = this.line;
   },
 
-  onKeepDrawing: function(canvas, o) {
-    if (!this.line) return; 
+  onKeepDrawing: function (canvas, o) {
+    if (!this.line) return;
     const pointer = this.getPointer(canvas, o.e);
     this.points.push(pointer.x, pointer.y);
     this.line.path = this._pointsToPath(this.points);
     this.renderAll(canvas);
   },
 
-  onFinishDrawing: function(canvas, o) {
+  onFinishDrawing: function (canvas, o) {
     this.selectedLine = this.line;
     this.selectedLine.originalPoints = [...this.points];
     this.editingTool(canvas, this.line);
@@ -63,26 +63,31 @@ const followPointerImplementation = {
         };
   },
 
-  getToolHTML: function(currentValues) {
+  getToolHTML: function (currentValues) {
     return `
-      Smoothing: <input type='range' class='smoothing' value='${currentValues.smoothing}' min='0' max='${MAX_SMOOTHING}' step='0.01'>
+      Smoothing: <input type='range' class='smoothing' value='${currentValues.smoothing}' min='0' max='${
+        MAX_SMOOTHING}' step='0.01'>
       <button class='btn reset-original' data-action='reset-original'>Reset to Original</button>
     `;
   },
 
   onCustomAction: function (canvas, action) {
-    if (action === 'reset-original' && this.selectedLine && this.selectedLine.originalPoints) {
+    if (
+      action === "reset-original" &&
+      this.selectedLine &&
+      this.selectedLine.originalPoints
+    ) {
       const newPath = this._pointsToPath(this.selectedLine.originalPoints);
       this.setObjectProperties(this.selectedLine, {
         path: newPath,
-        smoothing: DEFAULT_SMOOTHING
+        smoothing: DEFAULT_SMOOTHING,
       });
       this.renderAll(canvas);
-      
+
       // Update the smoothing slider value
       const toolOptions = document.querySelector(`.${this.name}-options`);
       if (toolOptions) {
-        const smoothingSlider = toolOptions.querySelector('.smoothing');
+        const smoothingSlider = toolOptions.querySelector(".smoothing");
         if (smoothingSlider) {
           smoothingSlider.value = DEFAULT_SMOOTHING;
         }
@@ -90,12 +95,12 @@ const followPointerImplementation = {
     }
   },
 
-  getAdditionalOptions: function(toolOptions) {
+  getAdditionalOptions: function (toolOptions) {
     const smoothing = parseFloat(toolOptions.querySelector(".smoothing").value);
     return { smoothing };
   },
 
-  decorate: function(
+  decorate: function (
     canvas,
     line,
     lineWidth = DEFAULT_LINE_WIDTH,
@@ -106,9 +111,11 @@ const followPointerImplementation = {
     if (!line || !canvas) return;
 
     const strokeDashArray =
-      lineType === LineType.DOTTED ? [1, 1] :
-      lineType === LineType.DASHED ? [5, 5] :
-      null;
+      lineType === LineType.DOTTED
+        ? [1, 1]
+        : lineType === LineType.DASHED
+        ? [5, 5]
+        : null;
 
     const smoothing = additionalOptions.smoothing || DEFAULT_SMOOTHING;
     const originalPoints = line.originalPoints;
@@ -119,7 +126,7 @@ const followPointerImplementation = {
       path: newPath,
       strokeWidth: lineWidth,
       strokeDashArray: strokeDashArray,
-      smoothing: smoothing
+      smoothing: smoothing,
     });
 
     this.renderAll(canvas);
@@ -145,32 +152,44 @@ const followPointerImplementation = {
 
     if (points.length < windowSize) {
       return points;
-    }  
+    }
     const smoothedPoints = [...points];
     const halfWindow = Math.floor(windowSize / 2);
     const xCoords = points.filter((_, index) => index % 2 === 0);
     const yCoords = points.filter((_, index) => index % 2 === 1);
     const calculateCoefficients = (i, coords) => {
-      const windowCoords = coords.slice(Math.max(0, i - halfWindow), Math.min(coords.length, i + halfWindow + 1));
-      const x = Array.from({length: windowCoords.length}, (_, i) => i - Math.floor(windowCoords.length / 2));
+      const windowCoords = coords.slice(
+        Math.max(0, i - halfWindow),
+        Math.min(coords.length, i + halfWindow + 1)
+      );
+      const x = Array.from(
+        { length: windowCoords.length },
+        (_, i) => i - Math.floor(windowCoords.length / 2)
+      );
       const y = windowCoords;
-      const X = x.map(xi => Array.from({length: polynomialOrder + 1}, (_, j) => Math.pow(xi, j)));
-      const Y = y.map(yi => [yi]);
-      const Xt = X[0].map((_, i) => X.map(row => row[i])); // Transpose of X
-      const XtX = Xt.map(row => X[0].map((_, j) => row.reduce((sum, a, k) => sum + a * X[k][j], 0)));
-      const XtY = Xt.map(row => row.reduce((sum, a, k) => sum + a * Y[k][0], 0));
+      const X = x.map((xi) =>
+        Array.from({ length: polynomialOrder + 1 }, (_, j) => Math.pow(xi, j))
+      );
+      const Y = y.map((yi) => [yi]);
+      const Xt = X[0].map((_, i) => X.map((row) => row[i])); // Transpose of X
+      const XtX = Xt.map((row) =>
+        X[0].map((_, j) => row.reduce((sum, a, k) => sum + a * X[k][j], 0))
+      );
+      const XtY = Xt.map((row) =>
+        row.reduce((sum, a, k) => sum + a * Y[k][0], 0)
+      );
       const coeffs = this._gaussianElimination(XtX, XtY);
       return coeffs[0]; // Return only the constant term (smoothed value)
-    };  
+    };
     for (let i = 1; i < xCoords.length - 1; i++) {
       smoothedPoints[i * 2] = calculateCoefficients(i, xCoords);
     }
     for (let i = 1; i < yCoords.length - 1; i++) {
       smoothedPoints[i * 2 + 1] = calculateCoefficients(i, yCoords);
-    }  
+    }
     return smoothedPoints;
   },
-  
+
   _gaussianElimination: function (A, b) {
     const n = A.length;
     for (let i = 0; i < n; i++) {
@@ -182,7 +201,7 @@ const followPointerImplementation = {
       }
       [A[i], A[maxRow]] = [A[maxRow], A[i]];
       [b[i], b[maxRow]] = [b[maxRow], b[i]];
-  
+
       for (let j = i + 1; j < n; j++) {
         const factor = A[j][i] / A[i][i];
         b[j] -= factor * b[i];
@@ -191,7 +210,7 @@ const followPointerImplementation = {
         }
       }
     }
-  
+
     const x = new Array(n).fill(0);
     for (let i = n - 1; i >= 0; i--) {
       x[i] = b[i] / A[i][i];
