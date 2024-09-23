@@ -75,7 +75,8 @@ const curvedLineImplementation = {
     canvas,
     curve,
     lineWidth = DEFAULT_LINE_WIDTH,
-    lineType = LineType.SOLID
+    lineType = LineType.SOLID,
+    additionalOptions = {}
   ) {
     if (!curve || !canvas) return;
 

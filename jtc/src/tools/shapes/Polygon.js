@@ -10,7 +10,6 @@ import { createBaseTool } from "./BaseTool";
 const DEFAULT_NUMBER_OF_SIDES = 8;
 
 let _polygonCounter = 0;
-let _groupCounter = 0;
 
 const polygonImplementation = {
   name: "polygon",
@@ -107,7 +106,6 @@ const polygonImplementation = {
     polygon,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
-    segments, //TODO
     additionalOptions = {}
   ) {
     if (!polygon || !canvas) return;

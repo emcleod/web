@@ -171,9 +171,6 @@ export const createBaseTool = (toolImplementation) => {
           parseInt(toolOptions.querySelector(".line-width").value) ||
           DEFAULT_LINE_WIDTH;
         const lineType = toolOptions.querySelector(".line-type").value;
-        const segments =
-          parseInt(toolOptions.querySelector(".segments")?.value) ||
-          DEFAULT_SEGMENTS;
         let additionalOptions = {};
         if (typeof this.getAdditionalOptions === "function") {
           additionalOptions = this.getAdditionalOptions(toolOptions);
@@ -183,7 +180,6 @@ export const createBaseTool = (toolImplementation) => {
           this.selectedObject,
           lineWidth,
           lineType,
-          segments,
           additionalOptions
         );
       }

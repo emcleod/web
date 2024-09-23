@@ -105,7 +105,6 @@ const followPointerImplementation = {
     line,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
-    segments,
     additionalOptions = {}
   ) {
     if (!line || !canvas) return;

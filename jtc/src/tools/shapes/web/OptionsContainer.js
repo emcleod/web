@@ -59,11 +59,7 @@ export class OptionsFactory {
   }
 
   static getShapeTypeHTML(currentValues) {
-    return `
-      Segments: <input type='number' class='segments' value='${
-        currentValues.segments || DEFAULT_SEGMENTS
-      }'>
-    `;
+    return "";
   }
 
   static setupListeners(container, updateCallback, finishCallback, customActionCallback) {

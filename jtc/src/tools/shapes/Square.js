@@ -8,7 +8,6 @@ import {
 import { createBaseTool } from "./BaseTool";
 
 let _squareCounter = 0;
-let _groupCounter = 0;
 
 const squareImplementation = {
   name: "square",
@@ -80,14 +79,35 @@ const squareImplementation = {
         };
   },
 
+  getToolHTML: function(currentValues) {
+    return `
+      Segments: <input type='number' class='segments' data-action='change-segments' value='${
+        currentValues.segments || DEFAULT_SEGMENTS
+      }'>
+    `;
+  },
+
+  onCustomAction: function(canvas, action) {
+    if (action === "change-segments" && this.selectedCircle) {
+      this.updateObject(canvas);
+    }
+  },
+
+  getAdditionalOptions: function (toolOptions) {
+    const segments = parseInt(toolOptions.querySelector(".segments").value) || DEFAULT_SEGMENTS
+    return { segments };
+  },
+
   decorate(
     canvas,
     square,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
-    segments = DEFAULT_SEGMENTS
+    additionalOptions = {}
   ) {
     if (!square || !canvas) return;
+    const { segments } = additionalOptions;
+
     // Remove existing group if it exists
     const existingGroup = this.findObject(
       canvas,

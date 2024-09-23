@@ -78,7 +78,8 @@ const straightLineImplementation = {
     canvas,
     line,
     lineWidth = DEFAULT_LINE_WIDTH,
-    lineType = LineType.SOLID
+    lineType = LineType.SOLID,
+    additionalOptions = {}
   ) {
     if (!line || !canvas) return;
 

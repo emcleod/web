@@ -95,24 +95,22 @@ const spokesImplementation = {
       <span class='randomness-value'>${(currentValues.randomness * 100).toFixed(
         0
       )}%</span>
-      <button class='btn reset-original' data-action='reset-original'>Reset to Original</button>
+      <button class='btn reset-randomness' data-action='reset-randomness'>Reset randomness</button>
     `;
   },
 
   onCustomAction: function (canvas, action) {
-    if (action === 'apply-changes') {
+    if (action === "reset-randomness" && this.selectedSpokes) {
+      // Update the UI
       const toolOptions = document.querySelector(`.${this.name}-options`);
       if (toolOptions) {
-        const numberOfSpokes = parseInt(toolOptions.querySelector('.number-of-spokes').value);
-        const randomness = parseFloat(toolOptions.querySelector('.randomness').value);
-        
-        if (this.selectedSpokes) {
-          this.updateObject(canvas);
-        }
+        const randomnessInput = toolOptions.querySelector(".randomness");
+        randomnessInput.value = 0;
       }
+      // Redraw the spokes with zero randomness
+      this.updateObject(canvas);
     }
   },
-//  onCustomAction: function (canvas, action) {},
 
   getAdditionalOptions: function (toolOptions) {
     const numberOfSpokes =
@@ -129,18 +127,10 @@ const spokesImplementation = {
     spokes,
     lineWidth = DEFAULT_LINE_WIDTH,
     lineType = LineType.SOLID,
-    segments,
     additionalOptions = {}
   ) {
     if (!spokes || !canvas) return;
 
-    // Remove the old spoke group
-    this.removeObject(canvas, this.selectedSpokes);
-    spokes.getObjects().forEach(spoke => {
-      this.removeObject(canvas, spoke);
-    });
-    this.removeObject(canvas, spokes);
-    
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -155,26 +145,38 @@ const spokesImplementation = {
     const radius = spokes.width / 2;
     const { numberOfSpokes, randomness } = additionalOptions;
 
-      // Create new lines for the spokes
-  const newSpokes = this._createSpokes(
-    centerPoint,
-    { x: centerPoint.x + radius, y: centerPoint.y },
-    numberOfSpokes,
-    randomness,
-    spokes.initialAngle
-  );
-  newSpokes.forEach((spoke) => {
-    spoke.set({
-      stroke: lineType,
-      strokeWidth: lineWidth,
-      strokeDashArray: strokeDashArray,
-      selectable: false,
-      evented: false,
+    // Remove the old spoke group
+    this.removeObject(canvas, this.selectedSpokes);
+    spokes.getObjects().forEach((spoke) => {
+      this.removeObject(canvas, spoke);
     });
-  });
+    this.removeObject(canvas, spokes);
 
-  const newSpokeGroup = this._createSpokeGroup(canvas, centerPoint, newSpokes, spokes.initialAngle);
-  this.selectedSpokes = newSpokeGroup;
+    // Create new lines for the spokes
+    const newSpokes = this._createSpokes(
+      centerPoint,
+      { x: centerPoint.x + radius, y: centerPoint.y },
+      numberOfSpokes,
+      randomness,
+      spokes.initialAngle
+    );
+    newSpokes.forEach((spoke) => {
+      spoke.set({
+        stroke: lineType,
+        strokeWidth: lineWidth,
+        strokeDashArray: strokeDashArray,
+        selectable: false,
+        evented: false,
+      });
+    });
+
+    const newSpokeGroup = this._createSpokeGroup(
+      canvas,
+      centerPoint,
+      newSpokes,
+      spokes.initialAngle
+    );
+    this.selectedSpokes = newSpokeGroup;
   },
 
   _createSpokes: function (
@@ -191,10 +193,13 @@ const spokesImplementation = {
     );
 
     for (let i = 0; i < numberOfSpokes; i++) {
-      const angle = initialAngle + ((Math.PI * 2) / numberOfSpokes) * i;
+      let angle = initialAngle + ((Math.PI * 2) / numberOfSpokes) * i;
       let spokeRadius = radius;
 
       if (randomness > 0) {
+        // Apply randomness to angle
+        angle += (Math.random() - 0.5) * randomness * (Math.PI / 6);
+        // Apply randomness to radius
         spokeRadius *= 1 - randomness / 2 + Math.random() * randomness;
       }
 
