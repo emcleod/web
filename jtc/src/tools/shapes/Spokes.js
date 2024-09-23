@@ -126,10 +126,11 @@ const spokesImplementation = {
     canvas,
     spokes,
     lineWidth = DEFAULT_LINE_WIDTH,
-    lineType = LineType.SOLID,
+    lineType = DEFAULT_LINE_TYPE,
     additionalOptions = {}
   ) {
     if (!spokes || !canvas) return;
+
 
     const strokeDashArray =
       lineType === LineType.DOTTED
@@ -145,7 +146,7 @@ const spokesImplementation = {
     const radius = spokes.width / 2;
     const { numberOfSpokes, randomness } = additionalOptions;
 
-    // Remove the old spoke group
+        // Remove the old spoke group
     this.removeObject(canvas, this.selectedSpokes);
     spokes.getObjects().forEach((spoke) => {
       this.removeObject(canvas, spoke);
@@ -198,7 +199,7 @@ const spokesImplementation = {
 
       if (randomness > 0) {
         // Apply randomness to angle
-        angle += (Math.random() - 0.5) * randomness * (Math.PI / 6);
+        angle += (Math.random() - 0.5) * randomness * (Math.PI / 6); 
         // Apply randomness to radius
         spokeRadius *= 1 - randomness / 2 + Math.random() * randomness;
       }

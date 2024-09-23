@@ -102,7 +102,7 @@ const circleImplementation = {
     canvas,
     circle,
     lineWidth = DEFAULT_LINE_WIDTH,
-    lineType = LineType.SOLID,
+    lineType = DEFAULT_LINE_TYPE,
     additionalOptions = {}
   ) {
     if (!circle || !canvas) return;

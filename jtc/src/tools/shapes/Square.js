@@ -102,7 +102,7 @@ const squareImplementation = {
     canvas,
     square,
     lineWidth = DEFAULT_LINE_WIDTH,
-    lineType = LineType.SOLID,
+    lineType = DEFAULT_LINE_TYPE,
     additionalOptions = {}
   ) {
     if (!square || !canvas) return;
