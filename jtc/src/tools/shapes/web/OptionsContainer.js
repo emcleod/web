@@ -6,12 +6,16 @@ import {
 
 export class OptionsFactory {
   static getHTML(tool, className, currentValues = {}) {
-    let html = this.getBaseHTML(currentValues);
+    let html = '';
 
     if (tool.toolType === ToolType.LINE) {
+      html += this.getBaseHTML(currentValues);
       html += this.getLineTypeHTML(currentValues);
     } else if (tool.toolType === ToolType.SHAPE) {
+      html += this.getBaseHTML(currentValues);
       html += this.getShapeTypeHTML(currentValues);
+    } else if (tool.toolType === ToolType.POINT) {
+      // no-op for now
     } else {
       console.warn(`Unhandled tool type ${tool.toolType}`);
     }

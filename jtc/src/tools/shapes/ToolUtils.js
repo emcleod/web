@@ -11,6 +11,7 @@ export const DEFAULT_SEGMENTS = null;
 export const ToolType = Object.freeze({
   LINE: "line-type",
   SHAPE: "shape-type",
+  POINT: "point-type"
 });
 
 export const fadeIn = (element, duration = 300) => {
