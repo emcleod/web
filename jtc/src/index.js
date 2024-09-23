@@ -1,6 +1,7 @@
 import "./styles.css";
 import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
+import { FlowerTool } from "./tools/shapes/Flower";
 import { FollowPointerTool } from "./tools/shapes/FollowPointer";
 import { OvalTool } from "./tools/shapes/Oval";
 import { PolygonTool } from "./tools/shapes/Polygon";
@@ -28,6 +29,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
     const drawingTools = [
       CircleTool,
       CurvedLineTool,
+      FlowerTool,
       FollowPointerTool,
       OvalTool,
       PolygonTool,
