@@ -1,8 +1,7 @@
 import {
   LineType,
   ToolType,
-  DEFAULT_LINE_WIDTH,
-  DEFAULT_SEGMENTS,
+  DEFAULT_LINE_WIDTH
 } from "../ToolUtils";
 
 export class OptionsFactory {

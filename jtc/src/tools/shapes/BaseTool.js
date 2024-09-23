@@ -2,9 +2,7 @@ import {
   fadeIn,
   fadeOut,
   removeToolOptions,
-  ToolType,
   DEFAULT_LINE_WIDTH,
-  DEFAULT_SEGMENTS,
 } from "./ToolUtils";
 import { canvasInteractions } from "../../canvas/CanvasInteractions";
 import { OptionsFactory } from "./web/OptionsContainer";

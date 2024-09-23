@@ -3,6 +3,7 @@ import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { FollowPointerTool } from "./tools/shapes/FollowPointer";
 import { PolygonTool } from "./tools/shapes/Polygon";
+import { RectangleTool } from "./tools/shapes/Rectangle";
 import { StarTool } from "./tools/shapes/Star";
 import { StraightLineTool } from "./tools/shapes/StraightLine";
 import { SpokesTool } from "./tools/shapes/Spokes";
@@ -28,6 +29,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       CurvedLineTool,
       FollowPointerTool,
       PolygonTool,
+      RectangleTool,
       SpokesTool,
       SquareTool,
       StarTool,
