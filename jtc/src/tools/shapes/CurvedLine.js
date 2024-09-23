@@ -130,7 +130,6 @@ const curvedLineImplementation = {
     this.removeObjects(canvas, this.tempDots);
     this.tempDots = [];
     this.setObjectProperties(this.curve, { selectable: true, evented: true, objectCaching: true });
-//    this.setActiveObject(canvas, this.curve);
     canvas.fire("object:modified", { target: this.curve });
     this.selectedCurve = this.curve;
     this.editingTool(canvas, this.curve);

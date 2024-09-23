@@ -6,10 +6,11 @@ import { FollowPointerTool } from "./tools/shapes/FollowPointer";
 import { OvalTool } from "./tools/shapes/Oval";
 import { PolygonTool } from "./tools/shapes/Polygon";
 import { RectangleTool } from "./tools/shapes/Rectangle";
-import { StarTool } from "./tools/shapes/Star";
-import { StraightLineTool } from "./tools/shapes/StraightLine";
+import { SpiralTool } from "./tools/shapes/Spiral";
 import { SpokesTool } from "./tools/shapes/Spokes";
 import { SquareTool } from "./tools/shapes/Square";
+import { StarTool } from "./tools/shapes/Star";
+import { StraightLineTool } from "./tools/shapes/StraightLine";
 import { TriangleTool } from "./tools/shapes/Triangle";
 import { SelectionTool } from "./tools/Selection";
 import { CanvasManager } from "./canvas/CanvasManager";
@@ -34,6 +35,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       OvalTool,
       PolygonTool,
       RectangleTool,
+      SpiralTool,
       SpokesTool,
       SquareTool,
       StarTool,
