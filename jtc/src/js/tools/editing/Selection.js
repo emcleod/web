@@ -1,6 +1,6 @@
-import { CircleTool } from './shapes/Circle.js';
-import { SquareTool } from './shapes/Square.js';
-import { removeToolOptions } from './shapes/ToolUtils.js';
+import { CircleTool } from '../shapes/Circle.js';
+import { SquareTool } from '../shapes/Square.js';
+import { removeToolOptions } from '../shapes/ToolUtils.js';
 
 export const SelectionTool = {
   name: 'selection',

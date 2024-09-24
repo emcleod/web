@@ -1,4 +1,4 @@
-import "./styles.css";
+import "../css/styles.css";
 import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { DotTool } from "./tools/shapes/Dot";
@@ -13,7 +13,7 @@ import { SquareTool } from "./tools/shapes/Square";
 import { StarTool } from "./tools/shapes/Star";
 import { StraightLineTool } from "./tools/shapes/StraightLine";
 import { TriangleTool } from "./tools/shapes/Triangle";
-import { SelectionTool } from "./tools/Selection";
+import { SelectionTool } from "./tools/editing/Selection";
 import { CanvasManager } from "./canvas/CanvasManager";
 
 (function () {
