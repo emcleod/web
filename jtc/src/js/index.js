@@ -9,6 +9,7 @@ import { OvalTool } from "./tools/shapes/Oval";
 import { PolygonTool } from "./tools/shapes/Polygon";
 import { RectangleTool } from "./tools/shapes/Rectangle";
 import { SpiralTool } from "./tools/shapes/Spiral";
+import { SpiralBurstTool } from "./tools/shapes/SpiralBursts";
 import { SpokesTool } from "./tools/shapes/Spokes";
 import { SquareTool } from "./tools/shapes/Square";
 import { StarTool } from "./tools/shapes/Star";
@@ -40,6 +41,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       PolygonTool,
       RectangleTool,
       SpiralTool,
+      SpiralBurstTool,
       SpokesTool,
       SquareTool,
       StarTool,
