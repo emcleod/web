@@ -7,9 +7,11 @@ import {
 import { createBaseTool } from "./BaseTool";
 
 const DEFAULT_POINTINESS = 50;
-const DEFAULT_WIDTH = 50;
-const MIN_SLIDER_VALUE = 0;
-const MAX_SLIDER_VALUE = 100;
+const DEFAULT_WIDTH = 40;
+const MAX_POINTINESS = 80;
+const MIN_POINTINESS = 20;
+const MAX_WIDTH = 100;
+const MIN_WIDTH = 10;
 
 let _leafCounter = 0;
 
@@ -23,10 +25,10 @@ const leafImplementation = {
 
   onStartDrawing: function (canvas, o) {
     this.startPoint = this.getPointer(canvas, o.e);
-    this.leaf = this._createLeaf(this.startPoint, this.startPoint); // Initially, end point is same as start
+    this.leaf = this._createLeaf(this.startPoint, this.startPoint);
     this.addObject(canvas, this.leaf);
   },
-  
+
   onKeepDrawing: function (canvas, o) {
     if (!this.leaf || !this.startPoint) return;
     this.endPoint = this.getPointer(canvas, o.e);
@@ -34,53 +36,20 @@ const leafImplementation = {
     this.leaf = this._createLeaf(this.startPoint, this.endPoint);
     this.addObject(canvas, this.leaf);
   },
-  
+
   onFinishDrawing: function (canvas, o) {
     if (!this.leaf) return;
     this.leaf.setCoords();
     this.selectedLeaf = this.leaf;
+    this.selectedLeaf.startPoint = this.startPoint;
+    this.selectedLeaf.endPoint = this.endPoint;
+    this.selectedLeaf.pointiness = this.leaf.pointiness;
+    this.selectedLeaf.shapeWidth = this.leaf.shapeWidth;
     this.editingTool(canvas, this.leaf);
     this.leaf = null;
     this.startPoint = null;
     this.endPoint = null;
   },
-  
-  // onStartDrawing: function (canvas, o) {
-  //   this.startPoint = this.getPointer(canvas, o.e);
-  //   this.leaf = new fabric.Polygon([this.startPoint], {
-  //     _uid: _leafCounter++,
-  //     stroke: DEFAULT_LINE_TYPE,
-  //     strokeWidth: DEFAULT_LINE_WIDTH,
-  //     fill: 'rgba(0,0,0,0.1)', // Slightly transparent fill
-  //     selectable: false,
-  //     evented: false,
-  //     objectCaching: false,
-  //   });
-  //   this.addObject(canvas, this.leaf);
-  //   this.selectedLeaf = this.leaf;
-  // },
-  
-  // onKeepDrawing: function (canvas, o) {
-  //   if (!this.leaf || !this.startPoint) return;
-  //   this.endPoint = this.getPointer(canvas, o.e);
-  //   const points = this._generateLeafPoints(this.startPoint, this.endPoint);
-  //   this.setObjectProperties(this.leaf, { points: points });
-  //   this.renderAll(canvas);
-  // },
-
-  // onFinishDrawing: function (canvas, o) {
-  //   if (!this.leaf) return;
-  //   // Ensure the final shape is drawn with the last known end point
-  //   const points = this._generateLeafPoints(this.startPoint, this.endPoint);
-  //   this.setObjectProperties(this.leaf, { points: points, objectCaching: true });
-  //   this.leaf.setCoords();
-  //   this.selectedLeaf = this.leaf;
-  //   this.editingTool(canvas, this.leaf);
-  //   this.leaf = null;
-  //   this.startPoint = null;
-  //   this.endPoint = null;
-  //   this.renderAll(canvas);
-  // },
 
   onActivate: function (canvas) {},
 
@@ -94,7 +63,7 @@ const leafImplementation = {
     return this.selectedLeaf
       ? {
           pointiness: this.selectedLeaf.pointiness || DEFAULT_POINTINESS,
-          width: this.selectedLeaf.width || DEFAULT_WIDTH,
+          width: this.selectedLeaf.shapeWidth || DEFAULT_WIDTH,
         }
       : {
           pointiness: DEFAULT_POINTINESS,
@@ -103,17 +72,22 @@ const leafImplementation = {
   },
 
   getToolHTML: function (currentValues) {
+    console.log("Current width value:", currentValues.width);
     return `
       Pointiness: <input type='range' class='pointiness' data-action='change-pointiness' 
-        value='${currentValues.pointiness}' min='${MIN_SLIDER_VALUE}' max='${MAX_SLIDER_VALUE}'>
+        value='${currentValues.pointiness}' min='${MIN_POINTINESS}' max='${MAX_POINTINESS}'>
       Width: <input type='range' class='width' data-action='change-width' 
-        value='${currentValues.width}' min='${MIN_SLIDER_VALUE}' max='${MAX_SLIDER_VALUE}'>
+        value='${currentValues.width}' min='${MIN_WIDTH}' max='${MAX_WIDTH}'>
     `;
   },
 
-  onCustomAction: function (canvas, action) {
-    if ((action === "change-pointiness" || action === "change-width") && this.selectedLeaf) {
-      this.updateObject(canvas);
+  onCustomAction: function (canvas, action, value) {
+    if (this.selectedLeaf) {
+      if (action === "change-pointiness") {
+        this.updateObject(canvas, { pointiness: parseInt(value) });
+      } else if (action === "change-width") {
+        this.updateObject(canvas, { width: parseInt(value) });
+      }
     }
   },
 
@@ -140,70 +114,96 @@ const leafImplementation = {
         ? [5, 5]
         : null;
 
+    const points = this._generateLeafPoints(
+      leaf.startPoint,
+      leaf.endPoint,
+      pointiness,
+      width
+    );
     this.setObjectProperties(leaf, {
+      points: points,
       strokeWidth: lineWidth,
       strokeDashArray: strokeDashArray,
       pointiness: pointiness,
-      width: width,
+      shapeWidth: width,
     });
-
-    if (leaf.startPoint && leaf.endPoint) {
-      const points = this._generateLeafPoints(leaf.startPoint, leaf.endPoint, pointiness, width);
-      this.setObjectProperties(leaf, { points: points });
-    }
-
     this.renderAll(canvas);
   },
 
-  _createLeaf: function(start, end) {
-    const points = this._generateLeafPoints(start, end);
+  _createLeaf: function (
+    start,
+    end,
+    pointiness = DEFAULT_POINTINESS,
+    width = DEFAULT_WIDTH
+  ) {
+    const points = this._generateLeafPoints(start, end, pointiness, width);
     return new fabric.Polygon(points, {
       _uid: _leafCounter++,
       stroke: DEFAULT_LINE_TYPE,
-      strokeWidth: DEFAULT_LINE_WIDTH,
-      fill: 'transparent',
+      fill: "transparent",
       selectable: false,
       evented: false,
       objectCaching: false,
+      startPoint: start,
+      endPoint: end,
+      pointiness: pointiness,
+      shapeWidth: width,
     });
   },
-  
-  _generateLeafPoints: function (start, end, pointiness = DEFAULT_POINTINESS, width = DEFAULT_WIDTH) {
-    const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+
+  _generateLeafPoints: function (
+    start,
+    end,
+    pointiness = DEFAULT_POINTINESS,
+    width = DEFAULT_WIDTH
+  ) {
+    const length = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+    );
     const angle = Math.atan2(end.y - start.y, end.x - start.x);
-  
-    const leafPoints = this._generateLeafShape(length, width / 2, pointiness);
-  
+    const leafPoints = this._generateLeafShape(length, width, pointiness);
     // Rotate and translate the points
-    const rotatedAndTranslatedPoints = leafPoints.map(p => {
+    const rotatedAndTranslatedPoints = leafPoints.map((p) => {
       const rotated = this._rotatePoint(p, { x: 0, y: 0 }, angle);
       return {
         x: rotated.x + start.x,
-        y: rotated.y + start.y
+        y: rotated.y + start.y,
       };
     });
-  
+
     return rotatedAndTranslatedPoints;
   },
-  
-  _generateLeafShape: function(length, width, pointiness) {
-    const numPoints = 50; // Adjust for smoother or rougher curves
+
+  _generateLeafShape: function (length, width, pointiness) {
+    const numPoints = 50;
     const points = [];
-  
+
+    // Convert pointiness from 0-100 range to 0-1 range
+    const normalizedPointiness = pointiness / 100;
+    const peakPosition = 1 - normalizedPointiness;
+
     for (let i = 0; i <= numPoints; i++) {
       const t = i / numPoints;
       const x = length * t;
-      
-      // This function creates the leaf curve
-      const y = width * Math.sin(Math.PI * t) * (1 - t) * (1 + (pointiness / 100) * (1 - t));
-  
+
+      let y;
+      if (t <= peakPosition) {
+        // Shape from base to widest point
+        const tScaled = t / peakPosition;
+        y = width * Math.pow(Math.sin((Math.PI * tScaled) / 2), 0.85);
+      } else {
+        // Shape from widest point to tip
+        const tScaled = (t - peakPosition) / (1 - peakPosition);
+        y = width * Math.sin((Math.PI * (1 - tScaled)) / 2);
+      }
+
       points.push({ x, y });
     }
-  
+
     // Add points for the other side of the leaf (in reverse)
     for (let i = numPoints - 1; i >= 0; i--) {
       points.push({ x: points[i].x, y: -points[i].y });
-    }  
+    }
     return points;
   },
 
@@ -211,10 +211,10 @@ const leafImplementation = {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
     return {
-      x: (point.x * cos - point.y * sin) + center.x,
-      y: (point.x * sin + point.y * cos) + center.y
+      x: point.x * cos - point.y * sin + center.x,
+      y: point.x * sin + point.y * cos + center.y,
     };
-  }
+  },
 };
 
 export const LeafTool = createBaseTool(leafImplementation);
