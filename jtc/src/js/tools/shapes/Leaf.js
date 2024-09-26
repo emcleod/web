@@ -5,13 +5,18 @@ import {
   ToolType,
 } from "./ToolUtils";
 import { createBaseTool } from "./BaseTool";
+import { fabric } from "fabric";
 
-const DEFAULT_POINTINESS = 50;
+const DEFAULT_POINTINESS = 60;
 const DEFAULT_WIDTH = 40;
 const MAX_POINTINESS = 80;
 const MIN_POINTINESS = 20;
 const MAX_WIDTH = 100;
 const MIN_WIDTH = 10;
+const DEFAULT_SHOW_VEIN = false;
+const DEFAULT_VEIN_LENGTH = 80;
+const MIN_VEIN_LENGTH = 50;
+const MAX_VEIN_LENGTH = 100;
 
 let _leafCounter = 0;
 
@@ -45,6 +50,8 @@ const leafImplementation = {
     this.selectedLeaf.endPoint = this.endPoint;
     this.selectedLeaf.pointiness = this.leaf.pointiness;
     this.selectedLeaf.shapeWidth = this.leaf.shapeWidth;
+    this.selectedLeaf.showVein = this.leaf.showVein;
+    this.selectedLeaf.veinLength = this.leaf.veinLength;
     this.editingTool(canvas, this.leaf);
     this.leaf = null;
     this.startPoint = null;
@@ -64,21 +71,51 @@ const leafImplementation = {
       ? {
           pointiness: this.selectedLeaf.pointiness || DEFAULT_POINTINESS,
           width: this.selectedLeaf.shapeWidth || DEFAULT_WIDTH,
+          showVein: this.selectedLeaf.showVein || DEFAULT_SHOW_VEIN,
+          veinLength: this.selectedLeaf.veinLength || DEFAULT_VEIN_LENGTH,
         }
       : {
           pointiness: DEFAULT_POINTINESS,
           width: DEFAULT_WIDTH,
+          showVein: DEFAULT_SHOW_VEIN,
+          veinLength: DEFAULT_VEIN_LENGTH,
         };
   },
 
   getToolHTML: function (currentValues) {
-    console.log("Current width value:", currentValues.width);
     return `
       Pointiness: <input type='range' class='pointiness' data-action='change-pointiness' 
-        value='${currentValues.pointiness}' min='${MIN_POINTINESS}' max='${MAX_POINTINESS}'>
+        value='${
+          currentValues.pointiness
+        }' min='${MIN_POINTINESS}' max='${MAX_POINTINESS}'>
       Width: <input type='range' class='width' data-action='change-width' 
         value='${currentValues.width}' min='${MIN_WIDTH}' max='${MAX_WIDTH}'>
+      <label>
+        <input type='checkbox' id='show-vein-checkbox' class='show-vein' data-action='toggle-vein' ${
+          currentValues.showVein ? "checked" : ""
+        }>
+        Show central vein
+      </label>
+      <br>
+      Vein Length: <input type='range' id='vein-length-slider' class='vein-length' data-action='change-vein-length' 
+        value='${
+          currentValues.veinLength
+        }' min='${MIN_VEIN_LENGTH}' max='${MAX_VEIN_LENGTH}' 
+        ${currentValues.showVein ? "" : "disabled"}>
     `;
+  },
+
+  //TODO in base tool add custom listeners - this doesn't currently work.
+  // can get rid of the timeout in that case?
+  setupVeinListeners: function () {
+    const checkbox = document.getElementById("show-vein-checkbox");
+    const slider = document.getElementById("vein-length-slider");
+
+    if (checkbox && slider) {
+      checkbox.addEventListener("change", (event) => {
+        slider.disabled = !event.target.checked;
+      });
+    }
   },
 
   onCustomAction: function (canvas, action, value) {
@@ -87,6 +124,13 @@ const leafImplementation = {
         this.updateObject(canvas, { pointiness: parseInt(value) });
       } else if (action === "change-width") {
         this.updateObject(canvas, { width: parseInt(value) });
+      } else if (action === "toggle-vein") {
+        const showVein = value === 'true';
+        this.updateObject(canvas, { showVein: showVein });
+        // Set up listeners after updating the object
+        setTimeout(() => this.setupVeinListeners(), 0);
+      } else if (action === "change-vein-length") {
+        this.updateObject(canvas, { veinLength: parseInt(value) });
       }
     }
   },
@@ -94,7 +138,11 @@ const leafImplementation = {
   getAdditionalOptions: function (toolOptions) {
     const pointiness = parseInt(toolOptions.querySelector(".pointiness").value);
     const width = parseInt(toolOptions.querySelector(".width").value);
-    return { pointiness, width };
+    const showVein = toolOptions.querySelector(".show-vein").checked;
+    const veinLength = parseInt(
+      toolOptions.querySelector(".vein-length").value
+    );
+    return { pointiness, width, showVein, veinLength };
   },
 
   decorate: function (
@@ -106,7 +154,7 @@ const leafImplementation = {
   ) {
     if (!leaf || !canvas) return;
 
-    const { pointiness, width } = additionalOptions;
+    const { pointiness, width, showVein, veinLength } = additionalOptions;
     const strokeDashArray =
       lineType === LineType.DOTTED
         ? [1, 1]
@@ -114,19 +162,21 @@ const leafImplementation = {
         ? [5, 5]
         : null;
 
-    const points = this._generateLeafPoints(
+    const newLeaf = this._createLeaf(
       leaf.startPoint,
       leaf.endPoint,
       pointiness,
-      width
+      width,
+      showVein,
+      veinLength,
+      lineWidth,
+      strokeDashArray
     );
-    this.setObjectProperties(leaf, {
-      points: points,
-      strokeWidth: lineWidth,
-      strokeDashArray: strokeDashArray,
-      pointiness: pointiness,
-      shapeWidth: width,
-    });
+
+    this.removeObject(canvas, this.selectedLeaf);
+    this.addObject(canvas, newLeaf);
+    this.selectedLeaf = newLeaf;
+
     this.renderAll(canvas);
   },
 
@@ -134,13 +184,29 @@ const leafImplementation = {
     start,
     end,
     pointiness = DEFAULT_POINTINESS,
-    width = DEFAULT_WIDTH
+    width = DEFAULT_WIDTH,
+    showVein = DEFAULT_SHOW_VEIN,
+    veinLength = DEFAULT_VEIN_LENGTH,
+    lineWidth = DEFAULT_LINE_WIDTH,
+    strokeDashArray = null
   ) {
     const points = this._generateLeafPoints(start, end, pointiness, width);
-    return new fabric.Polygon(points, {
-      _uid: _leafCounter++,
+    const leafShape = new fabric.Polygon(points, {
       stroke: DEFAULT_LINE_TYPE,
       fill: "transparent",
+      strokeWidth: lineWidth,
+      strokeDashArray: strokeDashArray,
+    });
+
+    const groupObjects = [leafShape];
+
+    if (showVein) {
+      const vein = this._createVein(start, end, veinLength, lineWidth / 2);
+      groupObjects.push(vein);
+    }
+
+    return new fabric.Group(groupObjects, {
+      _uid: _leafCounter++,
       selectable: false,
       evented: false,
       objectCaching: false,
@@ -148,6 +214,40 @@ const leafImplementation = {
       endPoint: end,
       pointiness: pointiness,
       shapeWidth: width,
+      showVein: showVein,
+      veinLength: veinLength,
+    });
+  },
+
+  _createVein: function (start, end, veinLength, strokeWidth) {
+    const curvatureFactor = 0.05;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const veinEnd = {
+      x: start.x + dx * (veinLength / 100),
+      y: start.y + dy * (veinLength / 100),
+    };
+
+    // Calculate control point for the curve
+    const midPoint = {
+      x: (start.x + veinEnd.x) / 2,
+      y: (start.y + veinEnd.y) / 2,
+    };
+    const perpendicular = {
+      x: -dy / length,
+      y: dx / length,
+    };
+    const controlPoint = {
+      x: midPoint.x + perpendicular.x * (length * curvatureFactor),
+      y: midPoint.y + perpendicular.y * (length * curvatureFactor),
+    };
+
+    const path = `M ${start.x} ${start.y} Q ${controlPoint.x} ${controlPoint.y} ${veinEnd.x} ${veinEnd.y}`;
+    return new fabric.Path(path, {
+      stroke: DEFAULT_LINE_TYPE,
+      strokeWidth: strokeWidth,
+      fill: "",
     });
   },
 
@@ -180,6 +280,9 @@ const leafImplementation = {
 
     // Convert pointiness from 0-100 range to 0-1 range
     const normalizedPointiness = pointiness / 100;
+    // shape the tip
+    const tipShape = (1.1 * (1 - width / 100)) / (width / 100);
+    const tipScaler = Math.min(1.8, Math.max(1.3, tipShape));
     const peakPosition = 1 - normalizedPointiness;
 
     for (let i = 0; i <= numPoints; i++) {
@@ -194,7 +297,8 @@ const leafImplementation = {
       } else {
         // Shape from widest point to tip
         const tScaled = (t - peakPosition) / (1 - peakPosition);
-        y = width * Math.sin((Math.PI * (1 - tScaled)) / 2);
+        y =
+          width * Math.pow(Math.sin((Math.PI * (1 - tScaled)) / 2), tipScaler);
       }
 
       points.push({ x, y });
