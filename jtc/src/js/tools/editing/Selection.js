@@ -28,6 +28,7 @@ export const SelectionTool = {
     canvas.renderAll();
 
     const handleSelection = (e) => {
+      //TODO this is just a hack - needs to be fixed.
       if (e.selected && e.selected.length > 0) {
         const selectedObject = e.selected[0];
         if (selectedObject.type === 'circle') {

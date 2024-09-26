@@ -236,6 +236,7 @@ const flowerImplementation = {
         (startAngle + endAngle) / 2
       );
 
+      //TODO adding a multiplier gives a wilting flower effect
       // Apply randomness to the outer point
       const randOuterPoint = {
         x: outerPoint.x + (Math.random() - 0.5) * randomness * radius,

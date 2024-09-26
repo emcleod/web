@@ -1,0 +1,17 @@
+{
+  "colors": [
+    {
+      "color": "#FF0000",
+      "manufacturers": {
+        "co1": {
+          "colour_name": "red_a",
+          "number": 13
+        },
+        "co2": {
+          "colour_name": "red_b",
+          "number": 256
+        }
+      }
+    }
+  ]
+}

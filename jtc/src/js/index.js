@@ -4,6 +4,7 @@ import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { DotTool } from "./tools/shapes/Dot";
 import { FlowerTool } from "./tools/shapes/Flower";
 import { FollowPointerTool } from "./tools/shapes/FollowPointer";
+import { LeafTool } from "./tools/shapes/Leaf";
 import { OvalTool } from "./tools/shapes/Oval";
 import { PolygonTool } from "./tools/shapes/Polygon";
 import { RectangleTool } from "./tools/shapes/Rectangle";
@@ -34,6 +35,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       DotTool,
       FlowerTool,
       FollowPointerTool,
+      LeafTool,
       OvalTool,
       PolygonTool,
       RectangleTool,
