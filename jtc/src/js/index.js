@@ -1,4 +1,5 @@
 import "../css/styles.css";
+import { BrushTool } from "./tools/shapes/Brush";
 import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { DotTool } from "./tools/shapes/Dot";
@@ -31,6 +32,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
     canvasManager.setupCanvas();
 
     const drawingTools = [
+      BrushTool,
       CircleTool,
       CurvedLineTool,
       DotTool,

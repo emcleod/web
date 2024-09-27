@@ -111,7 +111,7 @@ const flowerImplementation = {
       Inner radius: <input type='range' class='inner-radius-ratio' value='${
         currentValues.innerRadiusRatio
       }' min='${MIN_INNER_RADIUS_RATIO}' max='${MAX_INNER_RADIUS_RATIO}' step='0.01'>
-      Petal width: <input type='range' class='petal-width-ratio' values='${
+      Petal width: <input type='range' class='petal-width-ratio' value='${
         currentValues.petalWidthRatio
       }' min='${MIN_PETAL_WIDTH_RATIO}' max='${MAX_PETAL_WIDTH_RATIO}' step='0.01'>
       Randomness: <input type='range' class='randomness' value='${
@@ -178,13 +178,6 @@ const flowerImplementation = {
       lineType,
       additionalOptions
     );
-    // this.setObjectProperties(this.selectedFlower, {
-    //   stroke: lineType,
-    //   strokeWidth: lineWidth,
-    //   strokeDashArray: strokeDashArray,
-    //   fill: "transparent",
-    //   radius: radius,
-    // });
     this.addObject(canvas, this.selectedFlower);
   },
 
