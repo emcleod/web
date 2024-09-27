@@ -178,13 +178,13 @@ const flowerImplementation = {
       lineType,
       additionalOptions
     );
-    this.setObjectProperties(this.selectedFlower, {
-      stroke: lineType,
-      strokeWidth: lineWidth,
-      strokeDashArray: strokeDashArray,
-      fill: "transparent",
-      radius: radius,
-    });
+    // this.setObjectProperties(this.selectedFlower, {
+    //   stroke: lineType,
+    //   strokeWidth: lineWidth,
+    //   strokeDashArray: strokeDashArray,
+    //   fill: "transparent",
+    //   radius: radius,
+    // });
     this.addObject(canvas, this.selectedFlower);
   },
 
@@ -280,10 +280,10 @@ const flowerImplementation = {
       top: center.y,
       originX: "center",
       originY: "center",
-      initialAngle: initialAngle,
       stroke: lineType,
       strokeWidth: lineWidth,
       strokeDashArray: strokeDashArray,
+      radius: radius,
       fill: "transparent",
       selectable: false,
       evented: false,

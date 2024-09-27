@@ -3,7 +3,7 @@ import { CircleTool } from "./tools/shapes/Circle";
 import { CurvedLineTool } from "./tools/shapes/CurvedLine";
 import { DotTool } from "./tools/shapes/Dot";
 import { FlowerTool } from "./tools/shapes/Flower";
-import { FollowPointerTool } from "./tools/shapes/FollowPointer";
+import { FreehandTool } from "./tools/shapes/Freehand";
 import { LeafTool } from "./tools/shapes/Leaf";
 import { OvalTool } from "./tools/shapes/Oval";
 import { PolygonTool } from "./tools/shapes/Polygon";
@@ -35,7 +35,7 @@ import { CanvasManager } from "./canvas/CanvasManager";
       CurvedLineTool,
       DotTool,
       FlowerTool,
-      FollowPointerTool,
+      FreehandTool,
       LeafTool,
       OvalTool,
       PolygonTool,

@@ -78,12 +78,6 @@ const spiralImplementation = {
     if (!this.spiralGroup) {
       return;
     }
-    this.setObjectProperties(this.spiralGroup, {
-      selectable: true,
-      evented: true,
-      objectCaching: true,
-    });
-    this.spiralGroup.setCoords();
     this.selectedSpiral = this.spiralGroup;
     this.editingTool(canvas, this.spiralGroup);
     this.spiral = null;

@@ -55,12 +55,23 @@ const spiralBurstImplementation = {
 
   onFinishDrawing: function (canvas, o) {
     if (!this.spirals || !this.startPoint) return;
-    const endPoint = this.getPointer(canvas, o.e);
+    const pointer = this.getPointer(canvas, o.e);
+    const radius = Math.sqrt(
+      Math.pow(pointer.x - this.startPoint.x, 2) +
+        Math.pow(pointer.y - this.startPoint.y, 2)
+    );
     const spiralBurstGroup = this._createSpiralBurstGroup(
       canvas,
       this.startPoint,
       this.spirals
     );
+    this.setObjectProperties(spiralBurstGroup, {
+      selectable: true,
+      evented: true,
+      objectCaching: true,
+      width: radius * 2,
+      height: radius * 2
+    });
     this.selectedSpiralBurst = spiralBurstGroup;
     this.editingTool(canvas, spiralBurstGroup);
     this.spirals = null;

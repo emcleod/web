@@ -24,6 +24,7 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
-    "fabric": "^5.4.0"
+    "fabric": "^5.4.0",
+    "smooth-array-js": "^0.1.7"
   }
 }
